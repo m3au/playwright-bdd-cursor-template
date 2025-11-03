@@ -1,6 +1,7 @@
 # Ultimative Playwright E2E stack <!-- omit from toc -->
 
-[![CI](https://github.com/m3au/tech-challenge/actions/workflows/test-and-publish.yml/badge.svg)](https://github.com/m3au/tech-challenge/actions/workflows/test-and-publish.yml)
+[![CI](https://github.com/m3au/tech-challenge/actions/workflows/ci.yml/badge.svg)](https://github.com/m3au/tech-challenge/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen)](tests/unit/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)](https://www.typescriptlang.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.56-green)](https://playwright.dev/)
 [![playwright-bdd](https://img.shields.io/badge/playwright--bdd-8.4-orange)](https://github.com/vitalets/playwright-bdd)
@@ -38,7 +39,7 @@ Playwright E2E test automation with BDD.
 
 Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/tech-challenge/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
 
-View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/tech-challenge/actions), we're running 30 tests, using 2 shards with 2 workers on each = 4 tests in parallel.
+View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/tech-challenge/actions), we're running 30 tests using 2 shards (WORKERS=100% per shard).
 
 ---
 
@@ -50,12 +51,15 @@ This project implements a complete Playwright E2E test automation framework with
 - **Page Object Model**: TypeScript 5 decorators directly on POM methods
 - **TypeScript**: Full type safety with strict mode
 - **Runtime**: Bun package manager and runtime
+- **Unit Testing**: 100% coverage for utility functions with Bun test runner
 - **Accessibility Testing**: Axe integration for a11y audits
 - **Performance Testing**: Lighthouse integration for performance audits
 - **Test Reporting**: Interactive HTML reports with GitHub Pages dashboard
 - **Code Quality**: ESLint, Prettier, CSpell, Husky hooks, Conventional Commits
 - **Environment Configuration**: Multi-environment support with .env files
 - **CI/CD**: GitHub Actions with automated test execution and report publishing
+- **Dependabot**: Automated dependency updates with version pinning
+- **Local Testing**: Act integration for testing GitHub Actions workflows locally
 - **AI Assistance**: Cursor IDE integration with rules and MCP servers
 
 For more details, see [Architecture Documentation](./docs/architecture.md) and [Goal](./docs/goal.md).
@@ -72,6 +76,12 @@ tech-challenge/
 │   └── rules/               # Cursor rules (commits, comments, testing, etc.)
 ├── .github/                 # GitHub configuration
 │   ├── workflows/           # CI/CD workflows (GitHub Actions)
+│   │   ├── ci.yml           # Main CI orchestrator workflow
+│   │   ├── test.yml         # E2E tests workflow
+│   │   ├── lighthouse.yml   # Lighthouse audit workflow
+│   │   ├── axe.yml          # Axe audit workflow
+│   │   └── publish.yml       # Report publishing workflow
+│   ├── dependabot.yml       # Dependabot dependency updates
 │   └── templates/           # Report templates (HTML)
 ├── .husky/                  # Git hooks (pre-commit, commit-msg, prepare-commit-msg, pre-push)
 ├── tests/                   # All test suites
@@ -83,12 +93,17 @@ tech-challenge/
 │   │   │   └── pages/       # Page POMs
 │   │   ├── utils/           # Utility functions
 │   │   └── world.ts         # Playwright fixtures and test setup
+│   ├── unit/                # Unit tests (100% coverage)
+│   │   ├── format.test.ts   # Format utility tests
+│   │   ├── random.test.ts   # Random utility tests
+│   │   └── locators.test.ts # Locator utility tests
 │   └── audit/               # Audit tests (axe, lighthouse)
 ├── scripts/                 # Utility scripts
 │   ├── bump-version.mjs     # Automatic version bumping
 │   ├── pin-versions.mjs     # Dependency version pinning
 │   └── changelog.mjs        # Changelog generation
 ├── docs/                    # Documentation
+├── Makefile                 # Make targets for local workflow testing
 ├── package.json             # Dependencies and scripts
 ├── bun.lock                 # Bun lock file (pinned dependency versions)
 ├── bunfig.toml              # Bun package manager configuration
@@ -139,7 +154,8 @@ cp .env.example .env
 **Testing:**
 
 ```bash
-bun run test     # Run Playwright tests (automatically runs pretest first)
+bun run test     # Run Playwright E2E tests (automatically runs pretest first)
+bun test tests/unit/  # Run unit tests (coverage enabled by default via bunfig.toml)
 bun pretest      # Generate test files from BDD features
 bun ui           # Run tests with Playwright UI
 bun headed       # Run tests in headed mode (see browser)
@@ -148,6 +164,8 @@ bun failed       # Run only failed tests from previous run
 bun axe          # Run accessibility tests
 bun lighthouse   # Run Lighthouse performance tests
 ```
+
+**Note**: `bun test tests/unit/` runs unit tests using Bun's built-in test runner with coverage enabled by default (configured in `bunfig.toml`). `bun run test` executes the npm script defined in `package.json` which runs Playwright E2E tests.
 
 **Code Quality:**
 
@@ -163,7 +181,19 @@ For detailed code quality configuration and all available scripts, see [Code Qua
 - `bun bump` - Update dependencies to latest versions and pin them
 - `bun pin` - Pin all dependency versions to exact versions
 
-For detailed setup instructions, configuration, and development workflow, see [Development Guide](./docs/development.md).
+**Local Workflow Testing:**
+
+```bash
+act -l              # List all available GitHub Actions workflows
+make test           # Test E2E tests workflow locally
+make lighthouse     # Test Lighthouse audit workflow locally
+make axe            # Test Axe audit workflow locally
+make publish        # Test publish reports workflow locally
+make ci             # Test main CI workflow locally
+make test-dryrun    # Dry run E2E tests workflow (list what would run)
+```
+
+For detailed setup instructions, configuration, and development workflow, see [Development Guide](./docs/development.md). For local workflow testing setup, see [Act Testing Documentation](./docs/act-testing.md).
 
 ## Architecture & Patterns
 
@@ -242,6 +272,7 @@ Version bumping and changelog generation happen automatically on commit:
 - **[Development Guide](./docs/development.md)** - Development setup, guidelines, and best practices
 - **[Code Quality Files](./docs/code-quality.md)** - Reference guide for all code quality configuration files
 - **[AI Tuning](./docs/ai-tuning.md)** - Cursor IDE rules and AI assistant configuration
+- **[Act Testing](./docs/act-testing.md)** - Local GitHub Actions workflow testing with act
 - **[Goal](./docs/goal.md)** - Goal requirements and solution overview
 
 ---

@@ -6,12 +6,15 @@
  * Automatically bumps package.json version on commit:
  * - feat: minor (0.1.0 -> 0.2.0)
  * - fix: patch (0.1.0 -> 0.1.1)
+ * - perf: patch (0.1.0 -> 0.1.1) - performance improvements
+ * - refactor: patch (0.1.0 -> 0.1.1) - code refactoring
  * - BREAKING CHANGE or feat!: major (0.1.0 -> 1.0.0)
  * - Other types: no bump
  */
 
 import { dirname, join } from 'node:path';
 import { readFileSync, writeFileSync } from 'node:fs';
+
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,7 +42,7 @@ try {
   const isBreaking =
     commitMessage.includes('BREAKING CHANGE') ||
     commitMessage.includes('BREAKING:') ||
-    commitMessage.match(/^(feat|fix)(\(.+\))?!:/);
+    commitMessage.match(/^(feat|fix|perf|refactor)(\(.+\))?!:/);
 
   let newVersion = currentVersion;
 
@@ -51,10 +54,22 @@ try {
     // Minor version bump
     newVersion = `${major}.${minor + 1}.0`;
     console.log(`✨ Feature detected: ${currentVersion} -> ${newVersion}`);
-  } else if (commitType === 'fix') {
+  } else if (commitType === 'fix' || commitType === 'perf' || commitType === 'refactor') {
     // Patch version bump
     newVersion = `${major}.${minor}.${patch + 1}`;
-    console.log(`🐛 Fix detected: ${currentVersion} -> ${newVersion}`);
+    let emoji;
+    let typeName;
+    if (commitType === 'fix') {
+      emoji = '🐛';
+      typeName = 'Fix';
+    } else if (commitType === 'perf') {
+      emoji = '⚡';
+      typeName = 'Performance';
+    } else {
+      emoji = '🔧';
+      typeName = 'Refactor';
+    }
+    console.log(`${emoji} ${typeName} detected: ${currentVersion} -> ${newVersion}`);
   } else {
     console.log(
       `ℹ️  Commit type "${commitType}" does not trigger version bump (${currentVersion})`,
@@ -67,18 +82,31 @@ try {
   writeFileSync(packageJsonPath, JSON.stringify(packageJson, undefined, 2) + '\n');
 
   // Output to stderr for display, stdout for script consumption
-  const messages = {
-    breaking: `🚀 BREAKING CHANGE detected: ${currentVersion} -> ${newVersion}`,
-    feat: `✨ Feature detected: ${currentVersion} -> ${newVersion}`,
-    fix: `🐛 Fix detected: ${currentVersion} -> ${newVersion}`,
-  };
-
   if (isBreaking && commitType) {
-    console.error(messages.breaking);
-  } else if (commitType === 'feat') {
-    console.error(messages.feat);
-  } else if (commitType === 'fix') {
-    console.error(messages.fix);
+    console.error(`🚀 BREAKING CHANGE detected: ${currentVersion} -> ${newVersion}`);
+  } else {
+    switch (commitType) {
+      case 'feat': {
+        console.error(`✨ Feature detected: ${currentVersion} -> ${newVersion}`);
+        break;
+      }
+      case 'fix': {
+        console.error(`🐛 Fix detected: ${currentVersion} -> ${newVersion}`);
+        break;
+      }
+      case 'perf': {
+        console.error(`⚡ Performance detected: ${currentVersion} -> ${newVersion}`);
+        break;
+      }
+      case 'refactor': {
+        console.error(`🔧 Refactor detected: ${currentVersion} -> ${newVersion}`);
+        break;
+      }
+      default: {
+        // No output for other types
+        break;
+      }
+    }
   }
 
   // Output new version to stdout for use by other scripts

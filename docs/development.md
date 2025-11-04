@@ -51,7 +51,7 @@ This guide provides setup instructions and development guidelines for the projec
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/m3au/tech-challenge.git
 cd tech-challenge
 
 # Install dependencies
@@ -97,10 +97,13 @@ bun pretest
 
 ```bash
 # Run unit tests (coverage enabled by default via bunfig.toml)
-bun test tests/unit/
+bun test
 ```
 
 Unit tests use Bun's built-in test runner and achieve 100% code coverage for utility functions (`tests/e2e/utils/`). Tests are located in `tests/unit/` and cover:
+
+- Unit tests run automatically before every commit (pre-commit hook)
+- Unit tests run first in CI/CD before other tests (E2E, Lighthouse, Axe)
 
 - String formatting utilities (`format.ts`)
 - Random number generation (`random.ts`)
@@ -115,11 +118,12 @@ Test GitHub Actions workflows locally using [act](https://github.com/nektos/act)
 act -l
 
 # Test individual workflows
-make test        # Test E2E tests workflow
-make lighthouse  # Test Lighthouse audit workflow
-make axe         # Test Axe audit workflow
-make publish     # Test publish reports workflow
-make ci          # Test main CI workflow
+make test           # Test E2E tests workflow locally
+make lighthouse     # Test Lighthouse audit workflow locally
+make axe            # Test Axe audit workflow locally
+make publish        # Test publish reports workflow locally
+make ci             # Test main CI workflow locally
+make test-dryrun    # Dry run E2E tests workflow (list what would run)
 ```
 
 **Prerequisites:**
@@ -129,8 +133,9 @@ make ci          # Test main CI workflow
 
 **Secrets:**
 
-- Secrets are stored in `.secrets` file (gitignored)
-- Contains `BASE_URL` for testing
+- Workflows use `BASE_URL` from GitHub Actions secrets
+- For local testing with act, ensure `.env` file contains `BASE_URL`
+- Act reads secrets from `.env` file via `--secret-file .env`
 
 For detailed setup and troubleshooting, see [Act Testing Documentation](./act-testing.md).
 
@@ -139,6 +144,14 @@ For detailed setup and troubleshooting, see [Act Testing Documentation](./act-te
 This project enforces high code quality standards through a combination of linting, formatting, type checking, and spell checking.
 
 For detailed information on the tools and configuration, refer to the [Code Quality Files Reference](./code-quality.md).
+
+**Editor Integration:**
+
+- **Format on Save**: Enabled via VS Code workspace settings (Prettier for code, Markdownlint for markdown)
+- **ESLint**: Auto-fix on save enabled
+- **TypeScript**: Real-time type checking
+- **CSpell**: Spell checking integrated into ESLint
+- **EditorConfig**: Consistent formatting across editors
 
 **Scripts:**
 
@@ -192,7 +205,8 @@ For detailed information on AI configuration, rules, and MCP integrations, see [
 1. Create a new file in `tests/e2e/poms/pages/` or `tests/e2e/poms/components/`
 2. Use `@Fixture` decorator to register the POM (use PascalCase for fixture name matching class name)
 3. Use `@Given`, `@When`, `@Then` decorators for step definitions
-4. Register the POM fixture in `tests/e2e/world.ts`
+4. Use `@Step` decorator for internal helper methods (imported from `@world`, defined in `tests/e2e/utils/decorators.ts`)
+5. Register the POM fixture in `tests/e2e/world.ts`
 
 For a complete implementation example, refer to `tests/e2e/poms/pages/configurator-page.ts`.
 
@@ -264,13 +278,15 @@ Version bumping and changelog generation happen automatically on commit:
 
 - **`feat:`** commits → Minor version bump (0.1.0 → 0.2.0)
 - **`fix:`** commits → Patch version bump (0.1.0 → 0.1.1)
+- **`perf:`** commits → Patch version bump (0.1.0 → 0.1.1) - performance improvements
+- **`refactor:`** commits → Patch version bump (0.1.0 → 0.1.1) - code refactoring
 - **`BREAKING CHANGE`** or **`feat!:`** → Major version bump (0.1.0 → 1.0.0)
-- Other commit types → No version bump
+- Other commit types (`docs:`, `style:`, `test:`, `chore:`, `ci:`, `build:`) → No version bump
 
 The `prepare-commit-msg` hook automatically:
 
 1. Bumps `package.json` version based on commit type
-2. Updates `CHANGELOG.md` with the new entry
+2. Updates [`CHANGELOG.md`](../CHANGELOG.md) with the new entry
 3. Stages both files for commit
 
 No manual version management needed - just follow Conventional Commits format and versions are handled automatically.
@@ -334,17 +350,27 @@ The config includes error handling that throws if `.env` file is missing.
 
 **Environment Variables:**
 
-| Variable         | Description                                                                                     | Example                       |
-| ---------------- | ----------------------------------------------------------------------------------------------- | ----------------------------- |
-| `BASE_URL`       | Application URL to test                                                                         | `https://www.example.com`     |
-| `ENV`            | Environment name                                                                                | `development` or `production` |
-| `TIMEOUT`        | Test timeout in milliseconds                                                                    | `30000`                       |
-| `EXPECT_TIMEOUT` | Assertion timeout in milliseconds                                                               | `15000`                       |
-| `WORKERS`        | Parallel workers (number or `%`)                                                                | `50%` or `5`                  |
-| `RETRIES`        | Number of test retries on failure                                                               | `0`, `1`, or `2`              |
-| `HEADED`         | Run browser in headed mode                                                                      | `true` or `false`             |
-| `SLOW_MO`        | Slow down operations (milliseconds)                                                             | `0` or `100`                  |
-| `TRACE`          | Trace mode for debugging (`off`, `on`, `on-first-retry`, `retain-on-failure`, `on-all-retries`) | `on-first-retry` or `on`      |
+The `.env` file supports the following configuration options:
+
+- **`BASE_URL`** - Base URL for the application under test (e.g., `https://www.company.de`)
+- **`TIMEOUT`** - Global timeout for all Playwright actions in milliseconds (default: `30000`)
+- **`EXPECT_TIMEOUT`** - Timeout for assertions in milliseconds (default: `15000`)
+- **`WORKERS`** - Number of parallel test workers (number or percentage like `50%`; percentage is calculated based on machine CPU cores, default: `50%`)
+- **`RETRIES`** - Number of times to retry failed tests (default: `1`)
+- **`REPEAT_EACH`** - Number of times to repeat each test (default: `0`, disabled)
+- **`HEADED`** - Run tests in headed mode (show browser window) - `true` or `false` (default: `false`)
+- **`SLOW_MO`** - Slow down operations by specified milliseconds for debugging (default: `0`)
+- **`CHROMIUM_ENABLED`** - Enable/disable Chromium browser tests (`true` or `false`, default: `true`)
+- **`FIREFOX_ENABLED`** - Enable/disable Firefox browser tests (`true` or `false`, default: `false`)
+- **`WEBKIT_ENABLED`** - Enable/disable WebKit browser tests (`true` or `false`, default: `false`)
+- **`SCREENSHOT`** - Screenshot capture mode (`off`, `on`, `only-on-failure`, default: `only-on-failure`)
+- **`FULLY_PARALLEL`** - Run tests fully parallel (`true` or `false`, default: `true`)
+- **`LIGHTHOUSE_PERFORMANCE_THRESHOLD`** - Lighthouse performance score threshold (0.0 to 1.0, where 1.0 = 100%, default: `0.0`)
+- **`LIGHTHOUSE_ACCESSIBILITY_THRESHOLD`** - Lighthouse accessibility score threshold (0.0 to 1.0, default: `0.0`)
+- **`LIGHTHOUSE_BEST_PRACTICES_THRESHOLD`** - Lighthouse best practices score threshold (0.0 to 1.0, default: `0.0`)
+- **`LIGHTHOUSE_SEO_THRESHOLD`** - Lighthouse SEO score threshold (0.0 to 1.0, default: `0.0`)
+- **`AXE_MAX_VIOLATIONS`** - Maximum allowed accessibility violations for Axe tests (default: `0`)
+- **`TRACE`** - Trace mode for debugging (`off`, `on`, `on-first-retry`, `retain-on-failure`, `on-all-retries`, default: `on-first-retry`)
 
 **CI/CD Configuration:**
 
@@ -401,6 +427,8 @@ Workflows can run independently or be orchestrated together via the main CI work
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [GitHub Pages Documentation](https://docs.github.com/en/pages)
+- [act Documentation](https://github.com/nektos/act) - Local GitHub Actions workflow testing
+- [Docker Documentation](https://docs.docker.com/) - Container platform for act
 
 **BDD & Testing Patterns:**
 

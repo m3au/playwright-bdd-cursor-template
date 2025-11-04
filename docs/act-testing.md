@@ -1,9 +1,13 @@
 # Act Configuration for Local GitHub Actions Testing
 
+This guide explains how to test GitHub Actions workflows locally using [act](https://github.com/nektos/act) before pushing changes to GitHub. Act runs workflows in Docker containers, simulating the GitHub Actions environment on your local machine.
+
+![Placeholder](https://placecats.com/neo/400/200)
+
 ## Prerequisites
 
 - Docker installed and running (`docker ps` should work)
-- `act` installed (`brew install act` or see <https://github.com/nektos/act>)
+- `act` installed (`brew install act` or see [act repository](https://github.com/nektos/act))
 
 **Note:** If Docker isn't running, start it first:
 
@@ -37,10 +41,7 @@ make test-dryrun
 
 ## Secrets
 
-Secrets are stored in `.secrets` file (not committed to git).
-Current secrets:
-
-- `BASE_URL`: Base URL for the application being tested
+Workflows use `BASE_URL` from GitHub Actions secrets (`${{ secrets.BASE_URL }}`). For local testing with act, ensure your `.env` file contains `BASE_URL`.
 
 ## Limitations
 
@@ -50,27 +51,17 @@ Current secrets:
 
 ## Platform Configuration
 
-The `.actrc` file specifies the platform image. Using `catthehacker/ubuntu:act-latest` for better compatibility.
+The `.actrc` file specifies the platform image (`catthehacker/ubuntu:act-latest`) for better compatibility.
 
-Common act flags (`--secret-file .secrets --container-architecture linux/amd64`) are centralized in the `ACT_FLAGS` Makefile variable, ensuring consistent configuration across all targets. The `--container-architecture linux/amd64` flag provides Apple Silicon Mac compatibility.
+Common act flags (`--secret-file .env --container-architecture linux/amd64`) are centralized in the `ACT_FLAGS` Makefile variable, ensuring consistent configuration across all targets. The `--container-architecture linux/amd64` flag provides Apple Silicon Mac compatibility.
 
 ## Troubleshooting
 
 - **Docker not running**:
+
   - Check with `docker ps`
-  - Start Docker Desktop or run `colima start`
-- **Apple Silicon Mac issues**:
-  - Scripts already include `--container-architecture linux/amd64`
-  - If issues persist, verify Docker is using correct architecture
+  - See Prerequisites section for Docker startup instructions
+
 - **Platform image fails**:
   - Try `act -P ubuntu-latest=ubuntu:latest`
-  - Or use `catthehacker/ubuntu:act-latest` (already configured)
-- **Bun setup issues**:
-  - The `setup-bun` action should work with the configured platform
-  - May need to wait for Docker image to download on first run
-- **Workflow validation**:
-  - Use `make test-dryrun` to validate without running
-  - The `test` target always runs with verbose output (`-v`)
-- **Secret file issues**:
-  - Ensure `.secrets` file exists with `BASE_URL=...`
-  - File is gitignored, create it if missing
+  - The `.actrc` file already configures `catthehacker/ubuntu:act-latest`

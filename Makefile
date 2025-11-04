@@ -1,7 +1,7 @@
 .PHONY: help test lighthouse axe ci publish test-dryrun
 
 # Act configuration
-ACT_FLAGS = --secret-file .secrets --container-architecture linux/amd64
+ACT_FLAGS = --secret-file .env --container-architecture linux/amd64
 
 # Default target
 .DEFAULT_GOAL := help
@@ -10,6 +10,14 @@ help:
 	@echo ""
 	@echo "GitHub Actions Workflow Testing with Act"
 	@echo "=========================================="
+	@echo ""
+	@echo "Purpose:"
+	@echo "  This Makefile provides convenient targets for testing CI/CD workflows"
+	@echo "  defined in .github/workflows/ locally using act."
+	@echo ""
+	@echo "  Use these targets to validate workflow changes before pushing to GitHub,"
+	@echo "  debug workflow issues locally, and ensure workflows work correctly in"
+	@echo "  your environment before committing changes."
 	@echo ""
 	@echo "Available targets:"
 	@echo ""
@@ -20,14 +28,19 @@ help:
 	@echo "  make publish      - Test publish reports workflow locally"
 	@echo "  make test-dryrun  - Dry run E2E tests workflow (list what would run)"
 	@echo ""
-	@echo "Act - Local GitHub Actions Testing"
-	@echo "  • Requires Docker to be running and act installed"
-	@echo "  • Use 'act -l' to list all available workflows"
-	@echo "  • Secrets are loaded from .secrets file (gitignored)"
-	@echo "  • Platform configured via .actrc file"
+	@echo "Requirements:"
+	@echo "  • Docker must be running (act uses Docker containers to simulate GitHub Actions)"
+	@echo "  • act must be installed (brew install act or see https://github.com/nektos/act)"
+	@echo "  • .env file with BASE_URL configured (copy .env.example to .env)"
+	@echo "  • .actrc file for platform configuration"
 	@echo ""
 	@echo "Tip: Use 'make <target>' to run a specific workflow locally"
 	@echo "     Run 'make help' (or simply: make) to see this help again"
+	@echo "     Use 'act -l' to list all available workflows"
+	@echo ""
+	@echo "Note: To run tests or the project itself, refer to package.json scripts"
+	@echo "      or run 'bun run' for a list of available commands"
+	@echo ""
 	@echo "For more information, see docs/act-testing.md"
 	@echo ""
 

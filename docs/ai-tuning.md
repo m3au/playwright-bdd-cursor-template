@@ -26,6 +26,7 @@ This document explains Cursor IDE AI configuration including global hooks, MCP i
   - [`pom.mdc`](#pommdc)
   - [`feature.mdc`](#featuremdc)
   - [`documentation.mdc`](#documentationmdc)
+  - [`markdown.mdc`](#markdownmdc)
 
 ---
 
@@ -119,6 +120,7 @@ External MCP server ([`@missionsquad/mcp-github`](https://github.com/MissionSqua
 - `playwright.mdc` - When editing Playwright test files
 - `feature.mdc` - When editing Gherkin feature files
 - `documentation.mdc` - When editing documentation files
+- `markdown.mdc` - When editing markdown files
 - `rules.mdc` - When editing rule files
 
 ---
@@ -173,7 +175,7 @@ Applied to Playwright test files (`tests/**/*.ts`, `playwright.config.ts`). Defi
 
 ### [`pom.mdc`](../.cursor/rules/pom.mdc)
 
-Applied to Page Object Model files (`tests/e2e/poms/**/*.ts`). Defines POM structure with `@Fixture` decorator registration, `@Given`/`@When`/`@Then` step definitions, and constructor injection of `Page` instance. Step methods must be async and match Gherkin scenarios exactly. POMs must be registered in `tests/e2e/world.ts`.
+Applied to Page Object Model files (`tests/e2e/poms/**/*.ts`). Defines POM structure with `@Fixture` decorator registration, `@Given`/`@When`/`@Then` step definitions, and constructor injection of `Page` instance. Step methods must be async and match Gherkin scenarios exactly. Internal helper methods use the `@Step` decorator (defined in `tests/e2e/utils/decorators.ts`, imported from `@world`). POMs must be registered in `tests/e2e/world.ts`.
 
 ---
 
@@ -185,4 +187,8 @@ Applied to Gherkin feature files (`**/*.feature`). Defines BDD standards and bes
 
 ### [`documentation.mdc`](../.cursor/rules/documentation.mdc)
 
-Applied to documentation files (`**/*.{md,mdx}`, `README.md`). Defines standards for honest, direct, factual content without marketing language. Requires overview first, implementation details in the middle, examples at the end. Use active voice, precise terms, and document what exists rather than future plans.
+Applied to documentation files (`**/*.{md,mdx,mdc}`). Defines content quality standards: honest, direct, factual content without marketing language. Covers language and tone, content quality, structure, accessibility, and consistency requirements. Focuses on what to write and how to write it.
+
+### [`markdown.mdc`](../.cursor/rules/markdown.mdc)
+
+Applied to markdown files (`**/*.{md,mdx,mdc}`). Defines markdown formatting syntax standards: table of contents handling, table formatting (DRY, alignment syntax), code block syntax (code references vs triple backticks), inline code usage, link paths, image paths, and horizontal rules. Focuses on markdown syntax and formatting rather than content.

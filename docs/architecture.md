@@ -223,6 +223,7 @@ This **eliminates** the intermediate step definition layer, co-locating step tex
 - **`@When`**: Action steps ("When I click...")
 - **`@Then`**: Assertion steps ("Then I should see...")
 - **`@Fixture`**: Registers POM class for dependency injection
+- **`@Step`**: Custom decorator for internal helper methods that should appear in Playwright test reports (defined in `tests/e2e/utils/decorators.ts`, re-exported from `@world`)
 
 ### Step Definition Flow
 

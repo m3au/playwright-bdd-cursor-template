@@ -54,7 +54,7 @@ Scripts from `package.json` for running code quality checks:
 - `bun lint:typescript` - TypeScript type checking only
 - `bun lint:eslint` - ESLint only
 - `bun lint:markdown` - markdownlint only
-- `bun test tests/unit/` - Run unit tests (coverage enabled by default via bunfig.toml)
+- `bun test` - Run unit tests (coverage enabled by default via bunfig.toml)
 ```
 
 Automated checks run on every commit via Git hooks, providing immediate feedback. All tools can also be run manually for local development and CI/CD pipelines.
@@ -216,7 +216,7 @@ The project uses Bun's built-in test runner for unit testing utility functions. 
 
 **Coverage Reporting**:
 
-- Coverage is generated automatically when running `bun test tests/unit/`
+- Coverage is generated automatically when running `bun test`
 - Coverage report shows:
   - Function coverage percentage
   - Line coverage percentage
@@ -325,9 +325,10 @@ These settings ensure code quality is maintained automatically as you type and s
 
 **What it does**:
 
+- Runs unit tests before commits
 - Runs lint-staged before commits
 - Executes ESLint, Prettier, and markdownlint on staged files
-- Prevents commits with linting/formatting errors
+- Prevents commits with failing tests or linting/formatting errors
 - Ensures code quality standards are maintained
 
 **Content**:
@@ -335,9 +336,16 @@ These settings ensure code quality is maintained automatically as you type and s
 ```bash
 #!/usr/bin/env sh
 
+# Run unit tests first
+echo "🧪 Running unit tests..."
+if ! bun test; then
+  echo "❌ Unit tests failed. Please fix the errors above."
+  exit 1
+fi
+echo "✅ Unit tests passed!"
+
 # Run lint-staged with better error handling
 echo "🔍 Running pre-commit checks..."
-
 if ! bunx lint-staged; then
   echo "❌ Pre-commit checks failed. Please fix the errors above."
   exit 1
@@ -409,6 +417,8 @@ echo "✅ Commit message format is valid"
 - Bumps `package.json` version based on commit type:
   - `feat:` → Minor version bump (0.1.0 → 0.2.0)
   - `fix:` → Patch version bump (0.1.0 → 0.1.1)
+  - `perf:` → Patch version bump (0.1.0 → 0.1.1) - performance improvements
+  - `refactor:` → Patch version bump (0.1.0 → 0.1.1) - code refactoring
   - `BREAKING CHANGE` or `feat!:` → Major version bump (0.1.0 → 1.0.0)
 - Automatically updates `CHANGELOG.md` with new entries
 - Stages updated `package.json` and `CHANGELOG.md` files

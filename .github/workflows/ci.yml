@@ -13,22 +13,22 @@ permissions:
 jobs:
   unit-tests:
     name: Unit Tests
-    uses: ./.github/workflows/unit-tests.yml@${{ github.ref }}
+    uses: ./.github/workflows/unit-tests.yml@main
 
   test:
     name: E2E Tests
     needs: [unit-tests]
-    uses: ./.github/workflows/test.yml@${{ github.ref }}
+    uses: ./.github/workflows/test.yml@main
 
   lighthouse:
     name: Lighthouse Audit
     needs: [unit-tests]
-    uses: ./.github/workflows/lighthouse.yml@${{ github.ref }}
+    uses: ./.github/workflows/lighthouse.yml@main
 
   axe:
     name: Axe Audit
     needs: [unit-tests]
-    uses: ./.github/workflows/axe.yml@${{ github.ref }}
+    uses: ./.github/workflows/axe.yml@main
 
   publish:
     name: Publish Reports

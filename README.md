@@ -6,7 +6,6 @@
 [![Playwright](https://img.shields.io/badge/Playwright-1.56-green)](https://playwright.dev/)
 [![playwright-bdd](https://img.shields.io/badge/playwright--bdd-8.4-orange)](https://github.com/vitalets/playwright-bdd)
 [![Bun](https://img.shields.io/badge/Bun-1.3-black)](https://bun.sh/)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
 [![ESLint](https://img.shields.io/badge/ESLint-9.39-purple)](https://eslint.org/)
 [![Prettier](https://img.shields.io/badge/Prettier-code--formatter-pink)](https://prettier.io/)
 [![Axe Core](https://img.shields.io/badge/Axe%20Core-4.11-blue)](https://github.com/dequelabs/axe-core)
@@ -15,7 +14,6 @@
 [![Markdownlint](https://img.shields.io/badge/Markdownlint-0.18-orange)](https://github.com/DavidAnson/markdownlint)
 [![CSpell](https://img.shields.io/badge/CSpell-9.2-purple)](https://cspell.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-enabled-blue)](https://github.com/features/actions)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-enabled-brightgreen)](https://pages.github.com/)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
@@ -26,22 +24,17 @@ Playwright E2E test automation with BDD.
 ## Table of Contents <!-- omit from toc -->
 
 - [About](#about)
+- [Test Reports](#test-reports)
 - [Documentation](#documentation)
 - [Project Structure](#project-structure)
 - [Quick Setup](#quick-setup)
 - [Architecture \& Patterns](#architecture--patterns)
+  - [Page Object Model](#page-object-model)
+  - [World](#world)
+  - [Data Layer](#data-layer)
+  - [BDD with Gherkin](#bdd-with-gherkin)
 - [AI Assistance](#ai-assistance)
 - [Code Quality](#code-quality)
-
----
-
-## Online reports! <!-- omit from toc -->
-
-![Test Reports Dashboard](docs/reports.jpg)
-
-Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/tech-challenge/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
-
-View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/tech-challenge/actions), we're running 30 tests using 2 shards (WORKERS=100% per shard).
 
 ---
 
@@ -53,7 +46,7 @@ This project implements a complete Playwright E2E test automation framework with
 - **Page Object Model**: TypeScript 5 decorators applied directly on POM methods (no separate step definitions)
 - **TypeScript**: Full type safety with strict mode enabled
 - **Runtime**: Bun package manager and runtime for fast execution
-- **Unit Testing**: 100% code coverage for utility functions using Bun's built-in test runner
+- **100% code coverage**: Unit tests for utility functions using Bun's built-in test runner
 - **Accessibility Testing**: Axe-core integration for automated WCAG compliance audits
 - **Performance Testing**: Lighthouse integration for Core Web Vitals and performance audits
 - **Test Reporting**: Interactive HTML reports published to GitHub Pages dashboard
@@ -63,6 +56,16 @@ This project implements a complete Playwright E2E test automation framework with
 - **Dependabot**: Automated dependency updates with strict version pinning
 - **Local Testing**: Act integration for testing GitHub Actions workflows locally before pushing
 - **AI Assistance**: Cursor IDE integration with project rules and MCP server connections
+
+---
+
+## Test Reports
+
+![Test Reports Dashboard](docs/reports.jpg)
+
+Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/tech-challenge/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
+
+View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/tech-challenge/actions), we're running 30 tests using 2 shards (WORKERS=100% per shard).
 
 ---
 
@@ -177,8 +180,6 @@ The `.env` file supports the following configuration options:
 | `WEBKIT_ENABLED`   | Enable/disable WebKit browser tests                      | `false`          |
 | `TRACE`            | Trace mode for debugging                                 | `on-first-retry` |
 
-For a complete list of all configuration options, see [Development Guide](./docs/development.md#environment-configuration).
-
 Environment-specific templates ([`.env.production`](.env.production)) are also available for different deployment environments.
 
 **Run:**
@@ -202,10 +203,6 @@ bun lint     # Run ESLint, TypeScript type checking, and Markdown linting
 bun lint:fix # Fix ESLint and Markdown errors automatically
 ```
 
-For detailed code quality configuration and all available scripts, see [Code Quality Files](./docs/code-quality.md).
-
-**Note**: `bun test` runs unit tests (coverage enabled via `bunfig.toml`). `bun run test` runs Playwright E2E tests.
-
 **Local CI/CD Testing:**
 
 Test GitHub Actions workflows locally using the Makefile (requires Docker and act):
@@ -219,30 +216,23 @@ make publish     # Test publish reports workflow locally
 make help        # Show all available workflow test targets
 ```
 
-For more information, see [Act Testing Documentation](./docs/act-testing.md).
-
-For detailed setup instructions, configuration, and development workflow, see [Development Guide](./docs/development.md).
-
 ## Architecture & Patterns
 
-**Page Object Model:**
+### Page Object Model
 
 POMs are located in `tests/e2e/poms/` with no separate step definition files. Step definitions use decorators directly on POM methods (`@Given`, `@When`, `@Then`), and POMs are registered as fixtures in `tests/e2e/world.ts` using the `@Fixture` decorator.
 
-**World:**
+### World
 
 The world fixture (`tests/e2e/world.ts`) extends playwright-bdd test with POM fixtures (CableConfiguratorPage, CableSelectorPopup, CookieBanner, ProductDetailPage), provides a world fixture containing the Playwright page and environment data, and exports BDD decorators (`@Fixture`, `@Given`, `@When`, `@Then`) and Playwright types (`expect`, `Locator`, `Page`). The custom `@Step` decorator for internal step definitions is defined in `tests/e2e/utils/decorators.ts` and re-exported from `@world`.
 
-**Data Layer:**
+### Data Layer
 
-- Data layer (`tests/e2e/data/config.ts`) loads environment-specific data for test execution
+Data layer (`tests/e2e/data/config.ts`) loads environment-specific data for test execution.
 
-**BDD with Gherkin:**
+### BDD with Gherkin
 
-- Feature files in `tests/e2e/features/`
-- Test files generated to `test-output/bdd-gen/`
-
-For more information about architecture and patterns, see [Architecture Documentation](./docs/architecture.md).
+Feature files in `tests/e2e/features/`. Test files generated to `test-output/bdd-gen/`.
 
 ## AI Assistance
 
@@ -253,8 +243,6 @@ This project is configured for AI-assisted development with Cursor IDE. Rules gu
 - Rules automatically apply when editing files (context-aware based on file patterns)
 - Use `@browser` for browser automation, `@playwright` for Playwright test features
 - Configuration files: `.cursor/rules/` (rules), `.cursor/mcp.json` (MCP servers), `.cursorignore` (context exclusion)
-
-For detailed information on AI configuration, rules, and MCP integrations, see [AI Tuning Documentation](./docs/ai-tuning.md).
 
 ---
 
@@ -275,11 +263,11 @@ This project uses comprehensive code quality tooling:
 
 **Quality Gates:**
 
-- **Pre-commit**: Unit tests, ESLint, Prettier, CSpell
-- **Commit-msg**: Conventional commit format validation
-- **Prepare-commit-msg**: Automatic version bumping and changelog generation
-- **Pre-push**: TypeScript type checking
-- **CI/CD**: All checks run automatically (unit tests run first, before other tests)
+- **Pre-commit**: Enforces comprehensive code, style, and test checks on staged files
+- **Commit-msg**: Validates conventional commit format
+- **Prepare-commit-msg**: Automatically bumps version and generates changelog entries
+- **Pre-push**: Ensures TypeScript type checking passes before remote push
+- **CI/CD**: Runs all quality gates automatically (unit tests run first, before other tests)
 
 **Editor Integration:**
 
@@ -288,8 +276,6 @@ This project uses comprehensive code quality tooling:
 - **TypeScript**: Real-time type checking
 - **CSpell**: Spell checking integrated into ESLint
 - **EditorConfig**: Consistent formatting across editors
-
-See [Code Quality Files](./docs/code-quality.md) for detailed configuration reference.
 
 **Automatic Versioning:**
 

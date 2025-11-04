@@ -1,10 +1,6 @@
 name: Publish Reports
 
 on:
-  workflow_run:
-    workflows: ['Unit Tests', 'E2E Tests', 'Lighthouse Audit', 'Axe Audit']
-    types:
-      - completed
   workflow_dispatch:
   workflow_call:
 
@@ -21,9 +17,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: |
-      (github.event_name == 'workflow_call' || 
-       (github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure'))) &&
-      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call')
+      github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -52,7 +46,6 @@ jobs:
           bunx playwright merge-reports \
             --reporter=html \
             test-output/blob-reports
-          # Move HTML report to desired location if it was created in default location
           if [ -d "playwright-report" ]; then
             mkdir -p test-output/playwright-report
             mv playwright-report/* test-output/playwright-report/ || true
@@ -97,19 +90,15 @@ jobs:
             cp .github/templates/axe-report.html test-output/axe/index.html
           fi
           if [ ! -f "test-output/playwright-report/index.html" ]; then
-            # Create a simple placeholder if no report was generated
             echo '<!doctype html><html><head><title>Playwright Report Unavailable</title></head><body><h1>Playwright Report Unavailable</h1><p>No test reports were generated. Check CI logs for details.</p></body></html>' > test-output/playwright-report/index.html
           fi
           if [ ! -f "test-output/unit-tests/index.html" ]; then
             cp .github/templates/unit-tests-report.html test-output/unit-tests/index.html
           fi
-          # Ensure lcov.info exists - copy from coverage artifact if missing
           if [ -f "test-output/unit-tests/index.html" ] && [ ! -f "test-output/unit-tests/lcov.info" ]; then
             if [ -f "test-output/unit-tests-coverage/lcov.info" ]; then
               cp test-output/unit-tests-coverage/lcov.info test-output/unit-tests/lcov.info
               echo "✓ Copied lcov.info from unit-tests-coverage artifact"
-            else
-              echo "Warning: unit-tests/index.html exists but lcov.info is missing and not found in coverage artifact"
             fi
           fi
 

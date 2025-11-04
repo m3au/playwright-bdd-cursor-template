@@ -1,5 +1,13 @@
 # Changelog
 
+## [✨ Feature detected: 1.2.0 -> 1.3.0
+
+1.3.0] - 2025-11-04
+
+### Added
+
+- **ci**: add unit tests workflow with HTML report
+
 ## [✨ Feature detected: 1.1.2 -> 1.2.0
 
 1.2.0] - 2025-11-04

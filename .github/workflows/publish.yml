@@ -2,7 +2,7 @@ name: Publish Reports
 
 on:
   workflow_run:
-    workflows: ['E2E Tests', 'Lighthouse Audit', 'Axe Audit']
+    workflows: ['Unit Tests', 'E2E Tests', 'Lighthouse Audit', 'Axe Audit']
     types:
       - completed
   workflow_dispatch:
@@ -73,9 +73,16 @@ jobs:
           name: axe-reports
           path: test-output/axe/
 
+      - name: Download unit test reports
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: unit-tests-report
+          path: test-output/unit-tests/
+
       - name: Create placeholder pages for missing reports
         run: |
-          mkdir -p test-output/lighthouse test-output/axe test-output/playwright-report
+          mkdir -p test-output/lighthouse test-output/axe test-output/playwright-report test-output/unit-tests
           if [ ! -f "test-output/lighthouse/index.html" ]; then
             cp .github/templates/lighthouse-report.html test-output/lighthouse/index.html
           fi
@@ -85,6 +92,9 @@ jobs:
           if [ ! -f "test-output/playwright-report/index.html" ]; then
             # Create a simple placeholder if no report was generated
             echo '<!doctype html><html><head><title>Playwright Report Unavailable</title></head><body><h1>Playwright Report Unavailable</h1><p>No test reports were generated. Check CI logs for details.</p></body></html>' > test-output/playwright-report/index.html
+          fi
+          if [ ! -f "test-output/unit-tests/index.html" ]; then
+            cp .github/templates/unit-tests-report.html test-output/unit-tests/index.html
           fi
 
       - name: Copy reports index template

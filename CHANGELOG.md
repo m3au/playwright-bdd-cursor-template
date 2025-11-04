@@ -1,5 +1,13 @@
 # Changelog
 
+## [🐛 Fix detected: 1.3.2 -> 1.3.3
+
+1.3.3] - 2025-11-04
+
+### Fixed
+
+- **ci**: fix reusable workflow references and artifact access
+
 ## [🐛 Fix detected: 1.3.1 -> 1.3.2
 
 1.3.2] - 2025-11-04

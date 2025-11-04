@@ -133,6 +133,7 @@ export default defineConfig({
       testMatch: ['lighthouse.spec.ts'],
       use: baseProjectUse,
       retries: 0,
+      repeatEach: 0,
     },
     {
       name: 'axe',
@@ -140,6 +141,7 @@ export default defineConfig({
       testMatch: ['axe.spec.ts'],
       use: baseProjectUse,
       retries: 0,
+      repeatEach: 0,
     },
   ],
 });

@@ -9,26 +9,20 @@ This guide explains how to test GitHub Actions workflows locally using [act](htt
 - Docker installed and running (`docker ps` should work)
 - `act` installed (`brew install act` or see [act repository](https://github.com/nektos/act))
 
-**Note:** If Docker isn't running, start it first:
-
-- Docker Desktop: Open Docker Desktop app
-- Colima: `colima start`
-- Other: Start your Docker daemon according to your setup
+**Note:** If Docker isn't running, ensure your Docker daemon is started (`docker ps` should work).
 
 ## Usage
 
 ```bash
-# Show available commands (or just run 'make')
+# Show available commands
 make help
-# or simply:
-make
 
 # List all available workflows (use act directly)
 act -l
 
 # Test individual workflows
 make test          # Test E2E tests workflow
-make lighthouse     # Test Lighthouse audit workflow
+make lighthouse    # Test Lighthouse audit workflow
 make axe           # Test Axe audit workflow
 make publish       # Test publish reports workflow
 
@@ -41,7 +35,7 @@ make test-dryrun
 
 ## Secrets
 
-Workflows use `BASE_URL` from GitHub Actions secrets (`${{ secrets.BASE_URL }}`). For local testing with act, ensure your `.env` file contains `BASE_URL`.
+Workflows use `BASE_URL` from GitHub Actions secrets (`${{ secrets.BASE_URL }}`). For local testing with act, ensure your [`.env`](../.env) file contains `BASE_URL`.
 
 ## Limitations
 
@@ -59,9 +53,14 @@ Common act flags (`--secret-file .env --container-architecture linux/amd64`) are
 
 - **Docker not running**:
 
-  - Check with `docker ps`
-  - See Prerequisites section for Docker startup instructions
+  - See **Docker startup** below for specific instructions.
 
 - **Platform image fails**:
+
   - Try `act -P ubuntu-latest=ubuntu:latest`
   - The `.actrc` file already configures `catthehacker/ubuntu:act-latest`
+
+- **Docker startup**:
+  - Docker Desktop: Open Docker Desktop app
+  - Colima: `colima start`
+  - Other: Start your Docker daemon according to your setup

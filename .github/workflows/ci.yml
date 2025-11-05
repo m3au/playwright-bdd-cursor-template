@@ -23,25 +23,28 @@ jobs:
   test:
     name: E2E Tests
     needs: [preflight]
+    if: github.actor != 'dependabot[bot]'
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
   lighthouse:
     name: Lighthouse Audit
     needs: [preflight]
+    if: github.actor != 'dependabot[bot]'
     uses: ./.github/workflows/lighthouse.yml
     secrets: inherit
 
   axe:
     name: Axe Audit
     needs: [preflight]
+    if: github.actor != 'dependabot[bot]'
     uses: ./.github/workflows/axe.yml
     secrets: inherit
 
   publish:
     name: Publish Reports
     needs: [preflight, test, lighthouse, axe]
-    if: always() && github.ref == 'refs/heads/main'
+    if: always() && github.ref == 'refs/heads/main' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read

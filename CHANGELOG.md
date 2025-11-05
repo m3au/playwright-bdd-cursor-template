@@ -12,6 +12,7 @@
 - **ci**: add automatic git tagging and release management
 
 ### Fixed
+- **ci**: skip E2E/audit tests on Dependabot PRs
 - **ci**: remove remaining concurrency groups from child workflows
 - **ci**: remove concurrency from child workflows to prevent deadlock
 - **ci**: prevent shard cancellation and stop duplicate runs

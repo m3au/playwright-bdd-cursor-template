@@ -20,16 +20,19 @@ jobs:
     name: E2E Tests
     needs: [unit-tests]
     uses: ./.github/workflows/test.yml
+    secrets: inherit
 
   lighthouse:
     name: Lighthouse Audit
     needs: [unit-tests]
     uses: ./.github/workflows/lighthouse.yml
+    secrets: inherit
 
   axe:
     name: Axe Audit
     needs: [unit-tests]
     uses: ./.github/workflows/axe.yml
+    secrets: inherit
 
   publish:
     name: Publish Reports

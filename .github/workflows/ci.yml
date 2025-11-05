@@ -8,6 +8,10 @@ on:
   # eslint-disable-next-line yml/no-empty-mapping-value -- GitHub Actions allows empty trigger events
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

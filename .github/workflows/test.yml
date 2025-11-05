@@ -10,6 +10,10 @@ on:
   # eslint-disable-next-line yml/no-empty-mapping-value -- GitHub Actions allows empty trigger events
   workflow_call:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -17,6 +21,7 @@ jobs:
   e2e-shard:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         shard: [1, 2]
     steps:

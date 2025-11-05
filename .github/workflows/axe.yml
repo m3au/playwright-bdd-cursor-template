@@ -45,3 +45,4 @@ jobs:
           name: axe-reports
           path: test-output/axe/
           retention-days: 30
+          if-no-files-found: ignore

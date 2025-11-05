@@ -11,10 +11,6 @@ if (!existsSync('.env')) {
 
 dotenv.config({ debug: false, quiet: true });
 
-function parseWorkers(value: string): number | string {
-  return value.endsWith('%') ? value : +value;
-}
-
 const config: PlaywrightTestConfig = {
   testDir: defineBddConfig({
     features: 'tests/e2e/features/**/*.feature',
@@ -28,7 +24,8 @@ const config: PlaywrightTestConfig = {
   forbidOnly: false,
   retries: +environment('RETRIES'),
   repeatEach: +environment('REPEAT_EACH'),
-  workers: parseWorkers(environment('WORKERS')),
+  // eslint-disable-next-line unicorn/no-unreadable-iife
+  workers: ((v) => (v.endsWith('%') ? v : +v))(environment('WORKERS')),
   timeout: +environment('TIMEOUT'),
   expect: { timeout: +environment('EXPECT_TIMEOUT') },
   reporter: [['html', { open: 'never', outputFolder: 'test-output/playwright-report' }], ['line']],

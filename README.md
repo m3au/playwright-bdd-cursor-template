@@ -104,12 +104,11 @@ tech-challenge/
 │   └── rules/                 # Cursor rules (commits, comments, testing, etc.)
 ├── **.github/**               # GitHub configuration
 │   ├── **workflows/**         # CI/CD workflows (GitHub Actions)
-│   │   ├── ci.yml             # Main CI orchestrator workflow
+│   │   ├── ci.yml             # Main CI orchestrator workflow + report publishing
 │   │   ├── unit-tests.yml     # Unit tests workflow
 │   │   ├── test.yml           # E2E tests workflow
 │   │   ├── lighthouse.yml     # Lighthouse audit workflow
-│   │   ├── axe.yml            # Axe audit workflow
-│   │   └── publish.yml        # Report publishing workflow
+│   │   └── axe.yml            # Axe audit workflow
 │   ├── dependabot.yml         # Dependabot dependency updates
 │   └── templates/             # Report templates (HTML)
 ├── .husky/                    # Git hooks (pre-commit, commit-msg, prepare-commit-msg, pre-push)

@@ -387,12 +387,11 @@ Additionally, CI automatically sets `forbidOnly: true` in `playwright.config.ts`
 
 The project uses modular GitHub Actions workflows:
 
-- **`ci.yml`**: Main orchestrator workflow that calls other workflows
+- **`ci.yml`**: Main orchestrator workflow that calls other workflows and publishes reports to GitHub Pages
 - **`unit-tests.yml`**: Unit tests workflow (runs before other workflows)
 - **`test.yml`**: E2E tests workflow (sharded for parallel execution)
 - **`lighthouse.yml`**: Lighthouse performance audit workflow
 - **`axe.yml`**: Axe accessibility audit workflow
-- **`publish.yml`**: Report publishing workflow (GitHub Pages)
 - **`dependabot.yml`**: Dependabot workflow that automatically pins dependency versions when Dependabot creates PRs
 
 Dependabot configuration is in `.github/dependabot.yml` (separate from workflow files). Dependabot is a GitHub feature that automatically creates pull requests for dependency updates.

@@ -18,7 +18,6 @@ This document describes the architecture and design decisions for the technical 
   - [Step Definition Flow](#step-definition-flow)
 - [Deployment \& Quality Architecture](#deployment--quality-architecture)
   - [CI/CD Workflow Architecture](#cicd-workflow-architecture)
-  - [Local Workflow Testing](#local-workflow-testing)
 
 ---
 
@@ -250,29 +249,4 @@ This section covers the CI/CD workflows, quality gates, and local development to
 
 ### CI/CD Workflow Architecture
 
-The project uses modular GitHub Actions workflows for CI/CD:
-
-- **`ci.yml`**: Main orchestrator workflow that coordinates test, lighthouse, and axe workflows
-- **`unit-tests.yml`**: Unit tests workflow (runs before other workflows)
-- **`test.yml`**: E2E tests workflow with sharding for parallel execution
-- **`lighthouse.yml`**: Lighthouse performance audit workflow
-- **`axe.yml`**: Axe accessibility audit workflow
-- **`publish.yml`**: Report publishing workflow for GitHub Pages
-- **`dependabot.yml`**: Dependabot configuration for automated dependency updates (GitHub feature, not a workflow file)
-
-Dependabot configuration is in `.github/dependabot.yml` (separate from workflow files). Dependabot is a GitHub feature that automatically creates pull requests for dependency updates. The configuration file specifies which package ecosystems to monitor and how to handle updates.
-
-Workflows can run independently or be orchestrated together via the main CI workflow. Each workflow supports both `push/pull_request` triggers and `workflow_call` for reusability.
-
-### Local Workflow Testing
-
-GitHub Actions workflows can be tested locally using [act](https://github.com/nektos/act) via Makefile targets:
-
-- `make test` - Test E2E tests workflow locally (verbose output)
-- `make lighthouse` - Test Lighthouse audit workflow locally
-- `make axe` - Test Axe audit workflow locally
-- `make publish` - Test publish reports workflow locally
-- `make ci` - Test main CI workflow locally
-- `make test-dryrun` - Dry run for workflow validation
-
-See [Act Testing Documentation](./act-testing.md) for detailed setup and usage.
+The project uses modular GitHub Actions workflows for CI/CD orchestration, test execution, and automated report publishing. For detailed workflow structure, local testing instructions, and configuration details, see the [CI/CD Workflow Structure section in Development Guide](./development.md#cicd-workflow-structure).

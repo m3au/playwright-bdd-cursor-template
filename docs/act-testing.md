@@ -43,9 +43,6 @@ make lighthouse
 # Run the accessibility audit (axe.yml)
 make axe
 
-# Test the report publishing step (publish.yml)
-make publish
-
 # Test the main CI pipeline (for 'push' events)
 make ci
 ```

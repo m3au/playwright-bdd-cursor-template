@@ -145,7 +145,24 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Add report dashboard link annotation
+      - name: Add report dashboard summary
         if: always()
         run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## 📊 Test Reports Dashboard
+
+          🎯 **Interactive HTML Reports:** [https://m3au.github.io/tech-challenge/](https://m3au.github.io/tech-challenge/)
+
+          ### Available Reports
+
+          - 🎭 [E2E Test Results](https://m3au.github.io/tech-challenge/playwright-report/)
+          - 🗼 [Lighthouse Performance](https://m3au.github.io/tech-challenge/lighthouse/)
+          - ♿ [Axe Accessibility](https://m3au.github.io/tech-challenge/axe/)
+          - 🧪 [Unit Tests Coverage](https://m3au.github.io/tech-challenge/unit-tests/)
+
+          ---
+
+          *Reports updated on every push to main*
+          EOF
+
           echo "::notice title=📊 Test Reports Dashboard::View interactive reports at https://m3au.github.io/tech-challenge/"

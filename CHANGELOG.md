@@ -3,8 +3,10 @@
 ## [1.5.6] - 2025-11-05
 
 ### Added
+- **ci**: add clickable report links in job summary
 
 - **ci**: add automatic git tagging and release management
+
 ### Fixed
 
 - **changelog**: remove brackets from version headers to fix markdown linting

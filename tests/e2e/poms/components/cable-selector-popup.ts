@@ -1,5 +1,13 @@
 import { Fixture, Step, expect, type Locator, type Page } from '@world';
-import { getRandomIndex, isValidTextItem } from '@utils';
+import {
+  calculateTargetPageIndex,
+  getRandomIndex,
+  hasClass,
+  isValidTextItem,
+  navigateToPageIndex,
+  waitForAjaxResponseFromHost,
+  waitForDOMStabilization,
+} from '@utils';
 import { getEnvironment } from '@data/config';
 
 @Fixture('CableSelectorPopup')
@@ -25,12 +33,12 @@ export class CableSelectorPopup {
   }
 
   @Step
-  async iSeeTheCableSelectorPopup() {
+  async iSeeTheCableSelectorPopup(): Promise<void> {
     await expect(this.popupLocator).toBeVisible();
   }
 
   @Step
-  async iSeeTheCableSelectorPopupIsOpen() {
+  async iSeeTheCableSelectorPopupIsOpen(): Promise<boolean> {
     return await this.popupLocator.isVisible();
   }
 
@@ -61,7 +69,6 @@ export class CableSelectorPopup {
     return await this.iClickConnector(connector);
   }
 
-  @Step
   private async iSelectRandomCableType(): Promise<string> {
     const availableTypes = await this.iGetAvailableCableTypes();
 
@@ -83,12 +90,10 @@ export class CableSelectorPopup {
     return typeText?.trim() || 'unknown';
   }
 
-  @Step
   private async iSelectSpecificCableType(type: string): Promise<string> {
     const count = await this.cableTypeItemLocator.count();
     let typeLocator: Locator | undefined;
 
-    // Find the cable type item that matches the text and is not inactive
     for (let index = 0; index < count; index++) {
       const item = this.cableTypeItemLocator.nth(index);
       const text = await item.textContent();
@@ -101,7 +106,6 @@ export class CableSelectorPopup {
     }
 
     if (!typeLocator) {
-      // Check if the type exists but is inactive
       const allItems = await this.cableTypeItemLocator.all();
       for (const item of allItems) {
         const text = await item.textContent();
@@ -144,11 +148,7 @@ export class CableSelectorPopup {
    * in the server's AJAX response, preventing selection of incompatible cable types.
    */
   private async iIsCableTypeInactive(locator: Locator): Promise<boolean> {
-    return await locator
-      .evaluate((element) => {
-        return element.classList.contains('inactive');
-      })
-      .catch(() => false);
+    return hasClass(locator, 'inactive');
   }
 
   /**
@@ -156,28 +156,23 @@ export class CableSelectorPopup {
    * The frontend uses this data to determine which end cable types should be marked inactive.
    */
   @Step
-  private async iWaitForBackendEvent() {
+  private async iWaitForBackendEvent(): Promise<void> {
     await expect(this.cableTypeItemLocator.first()).toBeVisible({ timeout: 5000 });
 
     try {
       const { environment } = getEnvironment();
-      const baseUrlHostname = new URL(environment.baseUrl).hostname;
-
-      const response = await this.page.waitForResponse(
-        (response) => {
-          const url = response.url();
-          return (
-            url.includes(baseUrlHostname) &&
-            url.includes('cableguy_ajax.html') &&
-            response.request().method() === 'GET'
-          );
-        },
-        { timeout: 5000 },
+      const response = await waitForAjaxResponseFromHost(
+        this.page,
+        environment.baseUrl,
+        'cableguy_ajax.html',
+        { timeout: 5000, method: 'GET' },
       );
 
-      const json = await response.json();
-      if (!this.iHasValidPlugsStructure(json))
-        throw new Error('Backend response does not contain expected plugs data structure');
+      if (response) {
+        const json = await response.json();
+        if (!this.iHasValidPlugsStructure(json))
+          throw new Error('Backend response does not contain expected plugs data structure');
+      }
     } catch (error) {
       if (error instanceof Error && error.message.includes('Timeout')) {
         await expect(this.cableTypeItemLocator.first()).toBeVisible({ timeout: 1000 });
@@ -194,11 +189,10 @@ export class CableSelectorPopup {
    * to ensure the DOM has stabilized before attempting selection.
    */
   @Step
-  private async iWaitForFrontendUpdate() {
+  private async iWaitForFrontendUpdate(): Promise<void> {
     await this.page
       .waitForFunction(
         () => {
-          // eslint-disable-next-line no-undef -- document is available in browser context
           const cableTypeItems = document.querySelectorAll(
             '[class*="plugmodal__category"] .items .item',
           );
@@ -207,7 +201,6 @@ export class CableSelectorPopup {
           const minExpectedElements = 5;
           if (cableTypeItems.length < minExpectedElements) return false;
 
-          // Count processed elements (marked inactive or confirmed active with content)
           let processedCount = 0;
           let hasActiveElements = false;
 
@@ -225,17 +218,15 @@ export class CableSelectorPopup {
             }
           }
 
-          // All elements processed AND at least one active element exists
           return processedCount === cableTypeItems.length && hasActiveElements;
         },
         { timeout: 5000 },
       )
       .catch(() => {
-        // Timeout fallback - continue if update happens differently
+        // Update may have happened differently
       });
 
-    // Additional delay to ensure DOM mutations have settled
-    await this.page.waitForTimeout(500);
+    await waitForDOMStabilization(this.page);
   }
 
   private iHasValidPlugsStructure(json: unknown): boolean {
@@ -251,7 +242,7 @@ export class CableSelectorPopup {
   }
 
   @Step
-  private async iEnsureConnectorMenuIsVisible() {
+  private async iEnsureConnectorMenuIsVisible(): Promise<void> {
     const connectorMenuVisible = await this.connectorMenuLocator.isVisible().catch(() => false);
     const hasCableTypes = await this.iHasCableTypes();
 
@@ -266,7 +257,6 @@ export class CableSelectorPopup {
     return cableTypeCount > 0 && (await this.cableTypeItemLocator.first().isVisible());
   }
 
-  @Step
   private async iClickConnector(connector?: string): Promise<string> {
     const connectorCount = await this.connectorItemLocator.count();
 
@@ -278,7 +268,6 @@ export class CableSelectorPopup {
       : this.iClickSpecificConnector(connector));
   }
 
-  @Step
   private async iClickRandomConnector(connectorCount: number): Promise<string> {
     const randomIndex = getRandomIndex(connectorCount);
     await this.iNavigateToConnectorPage(randomIndex, connectorCount);
@@ -291,7 +280,6 @@ export class CableSelectorPopup {
     return connectorText?.trim() || 'unknown';
   }
 
-  @Step
   private async iClickSpecificConnector(connectorName: string): Promise<string> {
     const connectorLocator = this.connectorItemLocator.filter({ hasText: connectorName });
     const connector = connectorLocator.first();
@@ -309,20 +297,24 @@ export class CableSelectorPopup {
   }
 
   @Step
-  private async iNavigateToConnectorPage(connectorIndex: number, totalConnectors: number) {
-    const targetPageIndex = await this.iCalculateTargetPageIndex(connectorIndex, totalConnectors);
-    const currentPageIndex = await this.iGetCurrentPageIndex();
-
-    await this.iNavigateToPage(currentPageIndex, targetPageIndex);
-  }
-
-  private async iCalculateTargetPageIndex(
+  private async iNavigateToConnectorPage(
     connectorIndex: number,
     totalConnectors: number,
-  ): Promise<number> {
+  ): Promise<void> {
     const paginationCount = await this.connectorPaginationItemLocator.count();
-    const connectorsPerPage = Math.ceil(totalConnectors / paginationCount);
-    return Math.floor(connectorIndex / connectorsPerPage);
+    const targetPageIndex = calculateTargetPageIndex(
+      connectorIndex,
+      totalConnectors,
+      paginationCount,
+    );
+    const currentPageIndex = await this.iGetCurrentPageIndex();
+
+    await navigateToPageIndex(
+      currentPageIndex,
+      targetPageIndex,
+      () => this.iNavigateRight(targetPageIndex),
+      () => this.iNavigateLeft(targetPageIndex),
+    );
   }
 
   private async iGetCurrentPageIndex(): Promise<number> {
@@ -330,9 +322,7 @@ export class CableSelectorPopup {
 
     for (let index = 0; index < paginationCount; index++) {
       const paginationItem = this.connectorPaginationItemLocator.nth(index);
-      const isActive = await paginationItem.evaluate((element) => {
-        return element.classList.contains('active');
-      });
+      const isActive = await hasClass(paginationItem, 'active');
       if (isActive) {
         return index;
       }
@@ -341,23 +331,6 @@ export class CableSelectorPopup {
     return -1;
   }
 
-  @Step
-  private async iNavigateToPage(currentPageIndex: number, targetPageIndex: number) {
-    while (currentPageIndex !== targetPageIndex) {
-      if (currentPageIndex < targetPageIndex) {
-        const navigated = await this.iNavigateRight(targetPageIndex);
-        if (!navigated) break;
-        currentPageIndex = targetPageIndex;
-        continue;
-      }
-
-      const navigated = await this.iNavigateLeft(targetPageIndex);
-      if (!navigated) break;
-      currentPageIndex = targetPageIndex;
-    }
-  }
-
-  @Step
   private async iNavigateRight(targetPageIndex: number): Promise<boolean> {
     const hasRightArrow = await this.rightArrowLocator.isVisible();
     if (!hasRightArrow) return false;
@@ -369,7 +342,6 @@ export class CableSelectorPopup {
     return true;
   }
 
-  @Step
   private async iNavigateLeft(targetPageIndex: number): Promise<boolean> {
     const hasLeftArrow = await this.leftArrowLocator.isVisible();
     if (!hasLeftArrow) return false;

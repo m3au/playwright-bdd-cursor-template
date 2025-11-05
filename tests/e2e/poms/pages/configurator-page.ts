@@ -1,12 +1,20 @@
 import { CableSelectorPopup } from '@components/cable-selector-popup';
 import { Fixture, Given, Then, expect, type Page, type Locator, When, Step } from '@world';
-import { getRandomIndex, setTestContext } from '@utils';
+import {
+  getRandomIndex,
+  setTestContext,
+  waitForAjaxResponseFromHost,
+  waitForDOMStabilization,
+  navigateToPageIndex,
+  hasClass,
+  isDisabled,
+} from '@utils';
 import { getEnvironment } from '@data/config';
 
 @Fixture('CableConfiguratorPage')
 export class CableConfiguratorPage {
-  private cableBeginningButton: Locator;
-  private cableEndButton: Locator;
+  private cableBeginningButtonLocator: Locator;
+  private cableEndButtonLocator: Locator;
   private cableBeginningImageLocator: Locator;
   private cableEndImageLocator: Locator;
   private cableSelectorPopup: CableSelectorPopup;
@@ -27,8 +35,8 @@ export class CableConfiguratorPage {
   private serverProductCount: number | undefined;
 
   constructor(protected page: Page) {
-    this.cableBeginningButton = this.page.getByRole('button', { name: 'cable beginning' });
-    this.cableEndButton = this.page.getByRole('button', { name: 'cable end' });
+    this.cableBeginningButtonLocator = this.page.getByRole('button', { name: 'cable beginning' });
+    this.cableEndButtonLocator = this.page.getByRole('button', { name: 'cable end' });
     this.cableBeginningImageLocator = this.page
       .locator('.cg-plugButton--left')
       .locator('.cg-plugImage');
@@ -57,14 +65,13 @@ export class CableConfiguratorPage {
   }
 
   @Given('I navigate to the cable guy page')
-  async navigate() {
+  async navigate(): Promise<void> {
     const { environment } = getEnvironment();
-    const cableGuyUrl = `${environment.baseUrl}/intl/cableguy.html`;
-    await this.page.goto(cableGuyUrl, { waitUntil: 'domcontentloaded' });
+    await this.page.goto(environment.baseUrl, { waitUntil: 'domcontentloaded' });
   }
 
   @When('I select a cable beginning of type {string}')
-  async selectBeginningCableType(type: string) {
+  async selectBeginningCableType(type: string): Promise<void> {
     await this.iVerifyCableConfiguratorReady();
     await this.iClickCableBeginning();
     await this.cableSelectorPopup.iSeeTheCableSelectorPopup();
@@ -73,13 +80,13 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iVerifyCableConfiguratorReady() {
-    await expect(this.cableBeginningButton).toBeVisible();
-    await expect(this.cableEndButton).toBeVisible();
+  private async iVerifyCableConfiguratorReady(): Promise<void> {
+    await expect(this.cableBeginningButtonLocator).toBeVisible();
+    await expect(this.cableEndButtonLocator).toBeVisible();
   }
 
   @When('I select a cable end of type {string}')
-  async selectEndCableType(type: string) {
+  async selectEndCableType(type: string): Promise<void> {
     await this.iClickCableEnd();
     await this.cableSelectorPopup.iSeeTheCableSelectorPopup();
     const actualType = await this.cableSelectorPopup.iSelectCableOfType(type, true);
@@ -87,7 +94,7 @@ export class CableConfiguratorPage {
   }
 
   @When('I select a cable beginning connector of type {string}')
-  async selectCableBeginning(connector: string) {
+  async selectCableBeginning(connector: string): Promise<void> {
     const isPopupOpen = await this.cableSelectorPopup.iSeeTheCableSelectorPopupIsOpen();
 
     if (!isPopupOpen) {
@@ -101,7 +108,7 @@ export class CableConfiguratorPage {
   }
 
   @When('I select a cable end connector of type {string}')
-  async selectCableEnd(connector: string) {
+  async selectCableEnd(connector: string): Promise<void> {
     const isPopupOpen = await this.cableSelectorPopup.iSeeTheCableSelectorPopupIsOpen();
 
     if (!isPopupOpen) {
@@ -117,29 +124,29 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iSeeTheBeginningConnectorSelected() {
+  private async iSeeTheBeginningConnectorSelected(): Promise<void> {
     await expect(this.cableBeginningImageLocator).toBeAttached({ timeout: 5000 });
     await expect(this.cableBeginningImageLocator).toHaveAttribute('src', /.+/);
   }
 
   @Step
-  private async iSeeTheEndConnectorSelected() {
+  private async iSeeTheEndConnectorSelected(): Promise<void> {
     await expect(this.cableEndImageLocator).toBeAttached({ timeout: 5000 });
     await expect(this.cableEndImageLocator).toHaveAttribute('src', /.+/);
   }
 
   @Step
-  private async iClickCableBeginning() {
-    await this.cableBeginningButton.click();
+  private async iClickCableBeginning(): Promise<void> {
+    await this.cableBeginningButtonLocator.click();
   }
 
   @Step
-  private async iClickCableEnd() {
-    await this.cableEndButton.click();
+  private async iClickCableEnd(): Promise<void> {
+    await this.cableEndButtonLocator.click();
   }
 
   @Step
-  private async iWaitForLoadingSpinnerToDisappear() {
+  private async iWaitForLoadingSpinnerToDisappear(): Promise<void> {
     const loaderVisible = await this.loadingSpinnerLocator.isVisible().catch(() => false);
     if (loaderVisible) {
       await expect(this.loadingSpinnerLocator).toBeHidden({ timeout: 10_000 });
@@ -148,7 +155,7 @@ export class CableConfiguratorPage {
   }
 
   @When('I select a manufacturer of type {string}')
-  async selectManufacturer(type: string) {
+  async selectManufacturer(type: string): Promise<void> {
     await this.iWaitForManufacturerSectionVisible();
     await (type.toLowerCase() === 'random'
       ? this.iSelectRandomManufacturer()
@@ -158,7 +165,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iWaitForApiResponseAndCaptureCount() {
+  private async iWaitForApiResponseAndCaptureCount(): Promise<void> {
     try {
       const response = await this.page.waitForResponse(
         (response) =>
@@ -175,7 +182,7 @@ export class CableConfiguratorPage {
         this.serverProductCount = count;
       }
     } catch {
-      // Continue if API response already completed
+      // Response may have already completed
     }
   }
 
@@ -184,7 +191,7 @@ export class CableConfiguratorPage {
    * The list updates via AJAX - waits for both backend response and frontend DOM update.
    */
   @Step
-  private async iWaitForManufacturerListUpdate() {
+  private async iWaitForManufacturerListUpdate(): Promise<void> {
     await this.iWaitForManufacturerAjaxResponse();
     await this.iWaitForManufacturerFrontendUpdate();
   }
@@ -193,25 +200,12 @@ export class CableConfiguratorPage {
    * Waits for AJAX response that updates manufacturer list based on cable configuration.
    */
   @Step
-  private async iWaitForManufacturerAjaxResponse() {
-    try {
-      const { environment } = getEnvironment();
-      const baseUrlHostname = new URL(environment.baseUrl).hostname;
-
-      await this.page.waitForResponse(
-        (response) => {
-          const url = response.url();
-          return (
-            url.includes(baseUrlHostname) &&
-            url.includes('cableguy_ajax.html') &&
-            response.request().method() === 'GET'
-          );
-        },
-        { timeout: 10_000 },
-      );
-    } catch {
-      // Continue if AJAX response already completed
-    }
+  private async iWaitForManufacturerAjaxResponse(): Promise<void> {
+    const { environment } = getEnvironment();
+    await waitForAjaxResponseFromHost(this.page, environment.baseUrl, 'cableguy_ajax.html', {
+      timeout: 10_000,
+      method: 'GET',
+    });
   }
 
   /**
@@ -219,17 +213,15 @@ export class CableConfiguratorPage {
    * The frontend adds/removes manufacturers based on availability - waits until all items are rendered.
    */
   @Step
-  private async iWaitForManufacturerFrontendUpdate() {
+  private async iWaitForManufacturerFrontendUpdate(): Promise<void> {
     await expect(this.manufacturerSectionLocator).toBeVisible({ timeout: 10_000 });
 
     await this.page
       .waitForFunction(
         () => {
-          // eslint-disable-next-line no-undef -- document is available in browser context
           const manufacturerItems = document.querySelectorAll('.cg-brands .items .item');
           if (manufacturerItems.length === 0) return false;
 
-          // Count items that have been rendered (have image or text content)
           let processedCount = 0;
           for (const item of manufacturerItems) {
             const hasImage = item.querySelector('img') !== null;
@@ -245,18 +237,17 @@ export class CableConfiguratorPage {
       )
       .catch(() => {});
 
-    // Additional delay to ensure DOM mutations have settled
-    await this.page.waitForTimeout(500);
+    await waitForDOMStabilization(this.page);
   }
 
   @Step
-  private async iWaitForManufacturerSectionVisible() {
+  private async iWaitForManufacturerSectionVisible(): Promise<void> {
     await expect(this.manufacturerSectionLocator).toBeVisible({ timeout: 10_000 });
     await expect(this.manufacturerItemLocator.first()).toBeVisible({ timeout: 5000 });
   }
 
   @Step
-  private async iSelectRandomManufacturer() {
+  private async iSelectRandomManufacturer(): Promise<void> {
     const totalCount = await this.manufacturerItemLocator.count();
     if (totalCount === 0) throw new Error('No manufacturers available to select');
 
@@ -268,7 +259,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iSelectSpecificManufacturer(manufacturerName: string) {
+  private async iSelectSpecificManufacturer(manufacturerName: string): Promise<void> {
     const manufacturerLocator = this.manufacturerItemLocator.filter({
       has: this.page.locator(`img[alt="${manufacturerName}"]`),
     });
@@ -290,7 +281,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iFindAndNavigateToManufacturer(manufacturerName: string) {
+  private async iFindAndNavigateToManufacturer(manufacturerName: string): Promise<void> {
     const totalCount = await this.manufacturerItemLocator.count();
     for (let index = 0; index < totalCount; index++) {
       const item = this.manufacturerItemLocator.nth(index);
@@ -307,7 +298,7 @@ export class CableConfiguratorPage {
   private async iNavigateToManufacturerPage(
     manufacturerIndex: number,
     _totalManufacturers: number,
-  ) {
+  ): Promise<void> {
     const itemsPerPage = await this.iGetManufacturersPerPage();
     const targetPageIndex = Math.floor(manufacturerIndex / itemsPerPage);
     const currentPageIndex = await this.iGetCurrentManufacturerPageIndex();
@@ -327,9 +318,7 @@ export class CableConfiguratorPage {
     const arrowCount = await this.manufacturerPaginationArrowLocator.count();
     for (let index = 0; index < arrowCount; index++) {
       const arrow = this.manufacturerPaginationArrowLocator.nth(index);
-      const isActive = await arrow.evaluate((element) => {
-        return element.classList.contains('active');
-      });
+      const isActive = await hasClass(arrow, 'active');
       if (isActive) return index;
     }
     return 0;
@@ -339,19 +328,13 @@ export class CableConfiguratorPage {
   private async iNavigateToManufacturerPageIndex(
     currentPageIndex: number,
     targetPageIndex: number,
-  ) {
-    while (currentPageIndex !== targetPageIndex) {
-      if (currentPageIndex < targetPageIndex) {
-        const navigated = await this.iNavigateManufacturerRight();
-        if (!navigated) break;
-        currentPageIndex = targetPageIndex;
-        continue;
-      }
-
-      const navigated = await this.iNavigateManufacturerLeft();
-      if (!navigated) break;
-      currentPageIndex = targetPageIndex;
-    }
+  ): Promise<void> {
+    await navigateToPageIndex(
+      currentPageIndex,
+      targetPageIndex,
+      () => this.iNavigateManufacturerRight(),
+      () => this.iNavigateManufacturerLeft(),
+    );
   }
 
   @Step
@@ -375,7 +358,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iClickManufacturer(index: number, _manufacturerName: string) {
+  private async iClickManufacturer(index: number, _manufacturerName: string): Promise<void> {
     const manufacturer = this.manufacturerItemLocator.nth(index);
     await manufacturer.waitFor({ state: 'attached', timeout: 5000 });
     await expect(manufacturer).toBeVisible();
@@ -385,7 +368,10 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iClickManufacturerByLocator(manufacturer: Locator, _manufacturerName: string) {
+  private async iClickManufacturerByLocator(
+    manufacturer: Locator,
+    _manufacturerName: string,
+  ): Promise<void> {
     await manufacturer.waitFor({ state: 'attached', timeout: 5000 });
     await expect(manufacturer).toBeVisible();
     await this.iCaptureManufacturerCount(manufacturer);
@@ -394,7 +380,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iCaptureManufacturerCount(manufacturer: Locator) {
+  private async iCaptureManufacturerCount(manufacturer: Locator): Promise<void> {
     const countLocator = manufacturer.locator('.cg-brands__item__count');
     const countText = await countLocator.textContent();
     if (countText) {
@@ -403,8 +389,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iCaptureManufacturerName(manufacturer: Locator) {
-    // Try to get manufacturer name from image alt text first
+  private async iCaptureManufacturerName(manufacturer: Locator): Promise<void> {
     const imageAlt = await manufacturer
       .locator('img')
       .getAttribute('alt')
@@ -415,7 +400,6 @@ export class CableConfiguratorPage {
       this.selectedManufacturerName = imageAlt;
       return;
     }
-    // Fallback to text content if image alt is not available
     const textContent = await manufacturer.textContent();
     if (textContent) {
       this.selectedManufacturerName = textContent.trim();
@@ -424,7 +408,6 @@ export class CableConfiguratorPage {
 
   @Step
   private async iGetManufacturerName(manufacturer: Locator): Promise<string> {
-    // Try to get manufacturer name from image alt text first
     const imageAlt = await manufacturer
       .locator('img')
       .getAttribute('alt')
@@ -434,7 +417,6 @@ export class CableConfiguratorPage {
     if (imageAlt) {
       return imageAlt;
     }
-    // Fallback to text content if image alt is not available
     const textContent = await manufacturer.textContent();
     if (textContent) {
       return textContent.trim();
@@ -443,13 +425,13 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iClickManufacturerItem(manufacturer: Locator) {
+  private async iClickManufacturerItem(manufacturer: Locator): Promise<void> {
     const manufacturerImage = manufacturer.locator('.cg-brands__item');
     await manufacturerImage.click({ timeout: 10_000 });
   }
 
   @Then('I see the available products')
-  async verifyAvailableProducts() {
+  async verifyAvailableProducts(): Promise<void> {
     await expect(this.productCountLocator).toBeVisible({ timeout: 10_000 });
     const loaderVisible = await this.loadingSpinnerLocator.isVisible().catch(() => false);
     if (loaderVisible) {
@@ -467,7 +449,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iVerifyManufacturerProductCount() {
+  private async iVerifyManufacturerProductCount(): Promise<void> {
     if (this.serverProductCount === undefined) {
       throw new Error('Server product count not available from AJAX response');
     }
@@ -492,19 +474,10 @@ export class CableConfiguratorPage {
       .isVisible()
       .catch(() => false);
     if (nextButtonVisible) {
-      const isDisabled = await this.productPaginationNextLocator
-        .evaluate((element) => {
-          return (
-            element.classList.contains('disabled') ||
-            element.hasAttribute('disabled') ||
-            element.getAttribute('aria-disabled') === 'true'
-          );
-        })
-        .catch(() => false);
-      return !isDisabled;
+      const buttonDisabled = await isDisabled(this.productPaginationNextLocator);
+      return !buttonDisabled;
     }
 
-    // Alternative: Check for pagination indicators (e.g., "page 1 of 2")
     const paginationText = await this.productPaginationLocator.textContent().catch(() => {
       return '';
     });
@@ -521,17 +494,17 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iNavigateToNextProductPage() {
+  private async iNavigateToNextProductPage(): Promise<void> {
     const nextButton = this.productPaginationNextLocator.first();
     await nextButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
       throw new Error('Next page button not found or not visible');
     });
     await nextButton.click({ timeout: 5000 });
-    await this.page.waitForTimeout(500);
+    await waitForDOMStabilization(this.page);
   }
 
   @When('I select the product {string}')
-  async selectProduct(type: string) {
+  async selectProduct(type: string): Promise<void> {
     const productCount = await this.productLinkLocator.count();
     if (productCount === 0) throw new Error('No products available to select');
 
@@ -539,7 +512,6 @@ export class CableConfiguratorPage {
     await this.iClickProduct(productToSelect);
   }
 
-  @Step
   private async iGetProductToSelect(type: string): Promise<Locator> {
     return type.toLowerCase() === 'any' || type.toLowerCase() === 'random'
       ? this.productLinkLocator.first()
@@ -547,7 +519,7 @@ export class CableConfiguratorPage {
   }
 
   @Step
-  private async iClickProduct(product: Locator) {
+  private async iClickProduct(product: Locator): Promise<void> {
     await product.waitFor({ state: 'visible', timeout: 5000 });
     await product.scrollIntoViewIfNeeded();
     await product.click({ timeout: 5000 });

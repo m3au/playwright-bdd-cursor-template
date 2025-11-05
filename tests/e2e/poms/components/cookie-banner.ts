@@ -11,25 +11,25 @@ export class CookieBanner {
   }
 
   @Given('I accept the cookies')
-  async acceptCookies() {
+  async acceptCookies(): Promise<void> {
     await this.iSeeTheCookieBanner();
     await this.iClickAcceptCookies();
     await this.iSeeTheCookieBannerDisappears();
   }
 
   @Step
-  private async iSeeTheCookieBanner() {
+  private async iSeeTheCookieBanner(): Promise<void> {
     await expect(this.cookieBannerLocator).toBeVisible({ timeout: 5000 });
   }
 
   @Step
-  private async iClickAcceptCookies() {
+  private async iClickAcceptCookies(): Promise<void> {
     await this.acceptButtonLocator.click();
     await this.cookieBannerLocator.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }
 
   @Step
-  private async iSeeTheCookieBannerDisappears() {
+  private async iSeeTheCookieBannerDisappears(): Promise<void> {
     await expect(this.cookieBannerLocator).toBeHidden({ timeout: 5000 });
   }
 }

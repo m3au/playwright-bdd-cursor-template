@@ -1,4 +1,5 @@
 import { Fixture, Then, When, Step, expect, type Page, type Locator } from '@world';
+import { waitForAjaxResponseFromHost, waitForDOMStabilization } from '@utils';
 import { getEnvironment } from '@data/config';
 
 @Fixture('ProductDetailPage')
@@ -17,18 +18,18 @@ export class ProductDetailPage {
   }
 
   @Then('I see the product page')
-  async verifyProductPageOpened() {
+  async verifyProductPageOpened(): Promise<void> {
     await this.iSeeTheProductPage();
   }
 
   @Step
-  async iSeeTheProductPage() {
+  async iSeeTheProductPage(): Promise<void> {
     await expect(this.productTitleLocator).toBeVisible({ timeout: 10_000 });
     await expect(this.productTitleLocator).toHaveText(/.+/);
   }
 
   @When('I add the product to shopping basket')
-  async addToShoppingBasket() {
+  async addToShoppingBasket(): Promise<void> {
     await expect(this.addToBasketButtonLocator).toBeVisible({ timeout: 10_000 });
     await this.addToBasketButtonLocator.scrollIntoViewIfNeeded();
     await this.addToBasketButtonLocator.click({ timeout: 5000, noWaitAfter: true });
@@ -37,7 +38,7 @@ export class ProductDetailPage {
   }
 
   @Then('I see the product in my shopping basket')
-  async verifyProductInShoppingBasket() {
+  async verifyProductInShoppingBasket(): Promise<void> {
     await this.iSeeTheBasketNotificationPopup();
   }
 
@@ -46,7 +47,7 @@ export class ProductDetailPage {
    * Notification appears after AJAX request completes and frontend updates DOM.
    */
   @Step
-  private async iWaitForBasketNotificationToAppear() {
+  private async iWaitForBasketNotificationToAppear(): Promise<void> {
     await this.iWaitForBasketAjaxResponse();
     await this.iWaitForBasketNotificationDOMUpdate();
   }
@@ -55,48 +56,49 @@ export class ProductDetailPage {
    * Waits for AJAX response that processes basket addition and returns updated basket data.
    */
   @Step
-  private async iWaitForBasketAjaxResponse() {
-    try {
-      const { environment } = getEnvironment();
-      const baseUrlHostname = new URL(environment.baseUrl).hostname;
+  private async iWaitForBasketAjaxResponse(): Promise<void> {
+    const { environment } = getEnvironment();
+    const hostname = new URL(environment.baseUrl).hostname;
 
-      await this.page.waitForResponse(
+    await waitForAjaxResponseFromHost(this.page, environment.baseUrl, 'basket', {
+      timeout: 10_000,
+    });
+
+    // Also try cart/ajax endpoints if basket didn't match
+    await this.page
+      .waitForResponse(
         (response) => {
           const url = response.url();
           return (
-            url.includes(baseUrlHostname) &&
-            (url.includes('basket') ||
-              url.includes('cart') ||
-              url.includes('ajax') ||
-              response.request().method() === 'POST')
+            url.includes(hostname) &&
+            (url.includes('cart') || url.includes('ajax') || response.request().method() === 'POST')
           );
         },
-        { timeout: 10_000 },
-      );
-    } catch {
-      // AJAX response might have already completed or not be needed, continue
-    }
+        { timeout: 1000 },
+      )
+      .catch(() => {
+        // Response may have already completed
+      });
   }
 
   /**
    * Waits for frontend to render basket notification in DOM after basket update.
    */
   @Step
-  private async iWaitForBasketNotificationDOMUpdate() {
+  private async iWaitForBasketNotificationDOMUpdate(): Promise<void> {
     // Wait for element to be attached first, then visible (more flexible than waiting for visible only)
     await this.basketNotificationLocator
       .waitFor({ state: 'attached', timeout: 10_000 })
       .catch(() => {
-        // Element might not be attached yet, continue
+        // Element may not be attached yet
       });
 
-    // Additional delay to ensure DOM mutations have settled
-    await this.page.waitForTimeout(500);
+    await waitForDOMStabilization(this.page);
   }
 
   @Step
-  private async iSeeTheBasketNotificationPopup() {
-    // Verify notification is visible (already waited for it to appear, so this should be quick)
+  private async iSeeTheBasketNotificationPopup(): Promise<void> {
+    // Already waited for it to appear, so this should be quick
     await expect(this.basketNotificationLocator).toBeVisible({ timeout: 10_000 });
   }
 }

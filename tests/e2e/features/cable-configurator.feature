@@ -3,7 +3,7 @@ Feature: Cable Configurator Selection
   I want to select cable type, connector types, and filter by manufacturer
   So that I can find and purchase the exact cable I need
 
-  Scenario Outline: Configure cable, filter by manufacturer and add to shopping cart
+  Scenario Outline: Add random cable to shopping cart
     Given I navigate to the cable guy page
     And I accept the cookies
     When I select a cable beginning of type "<cable_beginning_type>"
@@ -17,6 +17,7 @@ Feature: Cable Configurator Selection
     When I add the product to shopping basket
     Then I see the product in my shopping basket
 
+    # title-format: <type>
     Examples:
-      | cable_beginning_type | cable_beginning_connector | cable_end_type | cable_end_connector | manufacturer | product |
-      | random               | random                    | random         | random              | random       | any     |
+      | type   | cable_beginning_type | cable_beginning_connector | cable_end_type | cable_end_connector | manufacturer | product |
+      | random | random               | random                    | random         | random              | random       | any     |

@@ -1,110 +1,80 @@
 import * as chromeLauncher from 'chrome-launcher';
 import * as fs from 'node:fs';
 
+import { environment, waitForPort } from '@utils';
 import { expect, test } from '@playwright/test';
 
 import lighthouse from 'lighthouse';
 import path from 'node:path';
-import { setTimeout } from 'node:timers/promises';
 
-const baseUrl = process.env['BASE_URL'];
-if (!baseUrl) {
-  throw new Error('BASE_URL environment variable is required');
-}
-const performanceThreshold = Number.parseFloat(
-  process.env['LIGHTHOUSE_PERFORMANCE_THRESHOLD'] || '0.0',
-);
-const accessibilityThreshold = Number.parseFloat(
-  process.env['LIGHTHOUSE_ACCESSIBILITY_THRESHOLD'] || '0.0',
-);
-const bestPracticesThreshold = Number.parseFloat(
-  process.env['LIGHTHOUSE_BEST_PRACTICES_THRESHOLD'] || '0.0',
-);
-const seoThreshold = Number.parseFloat(process.env['LIGHTHOUSE_SEO_THRESHOLD'] || '0.0');
+const baseUrl = environment('BASE_URL');
+const performanceThreshold = +environment('LIGHTHOUSE_PERFORMANCE');
+const accessibilityThreshold = +environment('LIGHTHOUSE_ACCESSIBILITY');
+const bestPracticesThreshold = +environment('LIGHTHOUSE_BEST_PRACTICES');
+const seoThreshold = +environment('LIGHTHOUSE_SEO');
+const pwaThreshold = +environment('LIGHTHOUSE_PWA');
+
 const outputDirectory = path.join(process.cwd(), 'test-output');
 
-test.describe('Lighthouse Performance Tests', () => {
-  test('should meet Lighthouse performance thresholds', async ({ browser }) => {
-    // Get Chrome executable path from Playwright to ensure Lighthouse uses the same browser instance
-    // This prevents conflicts and ensures consistency between Playwright and Lighthouse
+test.describe('Performance Tests', () => {
+  test('should meet performance thresholds', async ({ browser }) => {
+    const url = baseUrl;
+
     const browserType = browser?.browserType();
     const executablePath = browserType?.executablePath();
 
-    if (!executablePath) {
-      throw new Error('Browser executable path not available');
-    }
+    // eslint-disable-next-line playwright/no-conditional-in-test -- Required validation before launching browser
+    if (!executablePath) throw new Error('Browser executable path not available');
 
-    // Launch Chrome with a dynamic port (0 = auto-assign)
-    // chrome-launcher will return the actual port used
     const chrome = await chromeLauncher.launch({
       chromePath: executablePath,
       chromeFlags: ['--headless', '--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     try {
-      // Get the actual port from chrome-launcher
-      const port = chrome.port || 9222;
+      // eslint-disable-next-line playwright/no-conditional-in-test -- Default port fallback
+      const port = chrome.port ?? 9222;
+      await waitForPort(port);
 
-      // Wait for Chrome debugger port to be ready before running Lighthouse
-      // This prevents ECONNREFUSED errors
-      await setTimeout(2000);
-
-      const url = `${baseUrl}/intl/cableguy.html`;
-      const options = {
+      const lighthouseOptions = {
         logLevel: 'info' as const,
         output: 'html' as const,
-        onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
+        onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo', 'pwa'],
         port,
-        emulatedFormFactor: 'desktop' as const,
+        preset: 'desktop' as const,
       };
 
-      const runnerResult = await lighthouse(url, options);
+      const runnerResult = await lighthouse(url, lighthouseOptions);
 
-      // Save report
       const lighthouseDirectory = path.join(outputDirectory, 'lighthouse');
-      if (!fs.existsSync(lighthouseDirectory)) {
-        fs.mkdirSync(lighthouseDirectory, { recursive: true });
-      }
+      fs.mkdirSync(lighthouseDirectory, { recursive: true });
 
       const timestamp = Date.now();
       const htmlReportPath = path.join(lighthouseDirectory, `lighthouse-report-${timestamp}.html`);
       const reportContent = runnerResult?.report;
+      // eslint-disable-next-line playwright/no-conditional-in-test -- Report content type check before writing
       if (reportContent && typeof reportContent === 'string') {
         fs.writeFileSync(htmlReportPath, reportContent);
-        // Also create index.html pointing to latest report
         fs.writeFileSync(path.join(lighthouseDirectory, 'index.html'), reportContent);
       }
 
-      // Also save JSON for programmatic access
       const jsonReportPath = path.join(lighthouseDirectory, `lighthouse-report-${timestamp}.json`);
-      fs.writeFileSync(jsonReportPath, JSON.stringify(runnerResult?.lhr || {}, undefined, 2));
+      fs.writeFileSync(jsonReportPath, JSON.stringify(runnerResult?.lhr ?? {}, undefined, 2));
 
-      // Check scores
       const scores = runnerResult?.lhr?.categories;
-      const performance = scores?.['performance']?.score || 0;
-      const accessibility = scores?.['accessibility']?.score || 0;
-      const bestPractices = scores?.['best-practices']?.score || 0;
-      const seo = scores?.['seo']?.score || 0;
+      const performance = scores?.['performance']?.score;
+      const accessibility = scores?.['accessibility']?.score;
+      const bestPractices = scores?.['best-practices']?.score;
+      const seo = scores?.['seo']?.score;
+      const pwa = scores?.['pwa']?.score;
 
-      // Log scores
-      // eslint-disable-next-line no-console -- Logging scores for CI visibility
-      console.log('Lighthouse Scores:');
-      // eslint-disable-next-line no-console -- Logging scores for CI visibility
-      console.log(`Performance: ${(performance * 100).toFixed(0)}`);
-      // eslint-disable-next-line no-console -- Logging scores for CI visibility
-      console.log(`Accessibility: ${(accessibility * 100).toFixed(0)}`);
-      // eslint-disable-next-line no-console -- Logging scores for CI visibility
-      console.log(`Best Practices: ${(bestPractices * 100).toFixed(0)}`);
-      // eslint-disable-next-line no-console -- Logging scores for CI visibility
-      console.log(`SEO: ${(seo * 100).toFixed(0)}`);
-
-      // Set thresholds from environment variables
       expect(performance).toBeGreaterThanOrEqual(performanceThreshold);
       expect(accessibility).toBeGreaterThanOrEqual(accessibilityThreshold);
       expect(bestPractices).toBeGreaterThanOrEqual(bestPracticesThreshold);
       expect(seo).toBeGreaterThanOrEqual(seoThreshold);
+      expect(pwa).toBeGreaterThanOrEqual(pwaThreshold);
     } finally {
-      await chrome.kill();
+      chrome.kill();
     }
   });
 });

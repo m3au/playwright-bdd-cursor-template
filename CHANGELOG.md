@@ -12,6 +12,7 @@
 - **ci**: add automatic git tagging and release management
 
 ### Fixed
+- **ci**: remove concurrency from child workflows to prevent deadlock
 - **ci**: prevent shard cancellation and stop duplicate runs
 - add test documentation
 - **ci**: use diff-tree to detect files in post-commit hook

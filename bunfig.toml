@@ -17,6 +17,10 @@ coverage = true
 root = "tests/unit"
 
 # Exclude decorators.ts from coverage due to Bun's tooling limitations with decorators
+# Exclude CLI scripts' main() functions - these are thin wrappers around tested business logic
 coveragePathIgnorePatterns = [
   "tests/utils/decorators.ts",
+  "scripts/bump-version.mjs",
+  "scripts/changelog.mjs",
+  "scripts/update-coverage-badge.mjs",
 ]

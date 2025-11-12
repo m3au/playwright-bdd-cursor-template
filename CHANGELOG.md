@@ -7,6 +7,7 @@
 
 - **ci**: rename unit tests to Pre-flight Checks
 ### Added
+- add automated coverage badge tooling
 - implement challenge-based test architecture
 
 - **ci**: add descriptive annotations for each test workflow

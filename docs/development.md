@@ -35,7 +35,7 @@ This guide provides setup instructions and development guidelines for the projec
   - [Test Configuration](#test-configuration)
   - [Environment Configuration](#environment-configuration)
     - [CI vs Local Configuration Differences](#ci-vs-local-configuration-differences)
-- [Resources](#resources-)
+- [Resources 🔗](#resources-)
 
 ---
 
@@ -109,11 +109,11 @@ make test-dryrun    # Dry run E2E tests workflow (list what would run)
 - Docker installed and running (`docker ps` should work)
 - `act` installed (`brew install act`)
 
-**Secrets:**
+**Environment Variables:**
 
-- Workflows use `BASE_URL` from GitHub Actions secrets
-- For local testing with act, ensure `.env` file contains `BASE_URL`
-- Act reads secrets from `.env` file via `--secret-file .env`
+- All environment variables come from `.env.production` (committed to repo) in CI
+- For local testing with act, ensure `.env` file contains all required `BASE_URL_<CHALLENGE>` variables
+- Act reads environment variables from `.env` file via the `--secret-file` flag (this is just the flag name, not actual secrets)
 
 For **detailed setup and troubleshooting**, including prerequisites like Docker, see the [Act Testing Documentation](./act-testing.md).
 
@@ -191,25 +191,25 @@ For detailed configuration, rules, and MCP integrations, see [AI Tuning Document
 
 ### Adding a New Feature
 
-1. Create a `.feature` file in `tests/e2e/features/`
+1. Create a `.feature` file in `tests/e2e/challenges/<challenge-name>/features/`
 2. Write Gherkin scenarios
 3. Implement step definitions in POMs using decorators
 
 ### Adding a New Page Object Model
 
-1. Create a new file in `tests/e2e/poms/pages/` or `tests/e2e/poms/components/`
+1. Create a new file in `tests/e2e/challenges/<challenge-name>/poms/pages/` or `tests/e2e/challenges/<challenge-name>/poms/components/`
 2. Use `@Fixture` decorator to register the POM (use PascalCase for fixture name matching class name)
 3. Use `@Given`, `@When`, `@Then` decorators for step definitions
 4. Use `@Step` decorator for internal helper methods (imported from `@world`, defined in `tests/utils/decorators.ts`)
 5. Register the POM fixture in `tests/e2e/world.ts`
 
-For a complete implementation example, refer to `tests/e2e/poms/pages/configurator-page.ts`.
+For a complete implementation example, refer to `tests/e2e/challenges/uitestingplayground/poms/pages/home-page.ts` or `tests/e2e/challenges/uitestingplayground/poms/pages/ajax-data-page.ts`.
 
 ### Best Practices
 
 1. **Use Page Object Model Pattern**: All page interactions go through POMs
 2. **Use Decorators**: Step definitions are decorators on POM methods
-3. **PascalCase Fixtures**: Fixture names should match class names (e.g., `@Fixture('CableConfiguratorPage')`)
+3. **PascalCase Fixtures**: Fixture names should match class names (e.g., `@Fixture('HomePage')`, `@Fixture('AjaxDataPage')`)
 4. **Wait Strategically**: Use Playwright's built-in waiting mechanisms
 5. **Follow BDD Conventions**: Given/When/Then structure
 6. **Step Naming**: Always start steps with **"I"** (e.g., "I navigate", "I click", "I see")
@@ -218,9 +218,9 @@ For a complete implementation example, refer to `tests/e2e/poms/pages/configurat
 
 ### Test Data
 
-- Use environment variables for configuration
-- Keep test data in `tests/e2e/data/`
-- Avoid hardcoded values
+- Use environment variables for configuration (accessed via `getEnvironment()` from `@world`)
+- Environment configuration is centralized in `tests/utils/environment.ts`
+- Avoid hardcoded values - use `.env` files for all configuration
 
 ### Debugging Tests
 
@@ -342,33 +342,86 @@ The config includes error handling that throws if `.env` file is missing.
 
 **Environment Variables:**
 
-The `.env` file supports the following configuration options:
+The `.env` file supports comprehensive Playwright configuration options. See `.env.example` for the complete list with descriptions. Key categories include:
 
-- **`BASE_URL`** - Base URL for the application under test (e.g., `https://www.company.de/page.html`)
-- **`TIMEOUT`** - Global timeout for all Playwright actions in milliseconds
-- **`EXPECT_TIMEOUT`** - Timeout for assertions in milliseconds
-- **`WORKERS`** - Number of parallel test workers (number or percentage like `50%`; percentage is calculated based on machine CPU cores)
-- **`RETRIES`** - Number of times to retry failed tests
-- **`REPEAT_EACH`** - Number of times to repeat each test (`0` = disabled)
-- **`HEADED`** - Run tests in headed mode (show browser window) - set to `1` for headed, empty for headless
-- **`SLOW_MO`** - Slow down operations by specified milliseconds for debugging
-- **`CHROMIUM`** - Enable/disable Chromium browser tests - set to `1` for enabled, empty for disabled
-- **`FIREFOX`** - Enable/disable Firefox browser tests - set to `1` for enabled, empty for disabled
-- **`WEBKIT`** - Enable/disable WebKit browser tests - set to `1` for enabled, empty for disabled
-- **`SCREENSHOT`** - Screenshot capture mode (`off`, `on`, `only-on-failure`)
-- **`FULLY_PARALLEL`** - Run tests fully parallel (`true` or `false`)
+**Test Execution:**
+
+- **`BASE_URL`** - Base URL for audit tests (lighthouse, axe) - comes from `.env.production`
+- **`BASE_URL_<CHALLENGE>`** - Challenge-specific base URLs (required for each challenge)
+  - **`BASE_URL_UITESTINGPLAYGROUND`** - Base URL for UITestingPlayground challenge
+  - **`BASE_URL_AUTOMATIONEXERCISE`** - Base URL for AutomationExercise challenge
+  - Each challenge must have its own `BASE_URL_<CHALLENGE>` variable (no fallback)
+- **`TIMEOUT`** - Global timeout for all Playwright actions in milliseconds (required)
+- **`EXPECT_TIMEOUT`** - Timeout for assertions in milliseconds (required)
+- **`WORKERS`** - Number of parallel test workers (number or percentage like `50%`) (required)
+- **`RETRIES`** - Number of times to retry failed tests (required)
+- **`REPEAT_EACH`** - Number of times to repeat each test (`0` = disabled) (required)
+- **`FULLY_PARALLEL`** - Run tests fully parallel (`true` or `false`) (required)
+- **`FORBID_ONLY`** - Prevent test.only() from running (`true` or `false`)
+- **`MAX_FAILURES`** - Maximum number of test failures before stopping (`0` = unlimited)
+
+**Browser Selection:**
+
+- **`CHROMIUM`** - Enable/disable Chromium browser tests (`1` = enabled, empty = disabled)
+- **`FIREFOX`** - Enable/disable Firefox browser tests (`1` = enabled, empty = disabled)
+- **`WEBKIT`** - Enable/disable WebKit browser tests (`1` = enabled, empty = disabled)
+- **`BROWSER_CHANNEL`** - Browser channel (e.g., `chrome`, `msedge`, `chrome-beta`)
+
+**Browser Behavior:**
+
+- **`HEADED`** - Run tests in headed mode (`1` = headed, empty = headless)
+- **`SLOW_MO`** - Slow down operations by specified milliseconds for debugging (`0` = disabled)
+- **`BROWSER_ARGS`** - Browser launch arguments (comma-separated)
+
+**Viewport & Device:**
+
+- **`VIEWPORT_WIDTH`** / **`VIEWPORT_HEIGHT`** - Viewport dimensions in pixels
+- **`DEVICE_SCALE_FACTOR`** - Device scale factor (1 = normal, 2 = retina)
+- **`USER_AGENT`** - Custom user agent string
+- **`LOCALE`** - Browser locale (e.g., `en-US`, `de-DE`)
+- **`TIMEZONE_ID`** - Timezone (e.g., `America/New_York`, `Europe/Berlin`)
+- **`GEOLOCATION`** - Geolocation coordinates (format: `latitude,longitude,accuracy`)
+- **`PERMISSIONS`** - Browser permissions (comma-separated: `geolocation,notifications,camera`)
+- **`COLOR_SCHEME`** - Color scheme (`light`, `dark`, `no-preference`)
+- **`HAS_TOUCH`** - Enable touch events (`1` = enabled)
+- **`IS_MOBILE`** - Emulate mobile device (`1` = enabled)
+
+**Network & Security:**
+
+- **`IGNORE_HTTPS_ERRORS`** - Ignore HTTPS errors (`1` = enabled)
+- **`BYPASS_CSP`** - Bypass Content Security Policy (`1` = enabled)
+- **`JAVASCRIPT_ENABLED`** - Enable JavaScript (`1` = enabled, default: enabled)
+- **`ACCEPT_DOWNLOADS`** - Auto-accept downloads (`1` = enabled, default: enabled)
+- **`ACTION_TIMEOUT`** - Action-specific timeout in milliseconds (`0` = use global timeout)
+- **`NAVIGATION_TIMEOUT`** - Navigation timeout in milliseconds (`0` = use global timeout)
+- **`PROXY_SERVER`** - Proxy server URL (e.g., `http://proxy.example.com:8080`)
+
+**Debugging & Reporting:**
+
+- **`TRACE`** - Trace mode (`off`, `on`, `on-first-retry`, `retain-on-failure`, `on-all-retries`) (required)
+- **`SCREENSHOT`** - Screenshot capture mode (`off`, `on`, `only-on-failure`) (required)
+- **`VIDEO`** - Video recording mode (`off`, `on`, `on-first-retry`, `retain-on-failure`, `on-all-retries`)
+- **`VIDEO_SIZE`** - Video dimensions (format: `widthxheight`, e.g., `1280x720`)
+- **`VIDEO_PATH`** - Video output path (relative to outputDir)
+
+**Audit Test Thresholds:**
+
 - **`LIGHTHOUSE_PERFORMANCE`** - Lighthouse performance score (0 to 1, where 1 = 100%)
 - **`LIGHTHOUSE_ACCESSIBILITY`** - Lighthouse accessibility score (0 to 1)
 - **`LIGHTHOUSE_BEST_PRACTICES`** - Lighthouse best practices score (0 to 1)
 - **`LIGHTHOUSE_SEO`** - Lighthouse SEO score (0 to 1)
 - **`LIGHTHOUSE_PWA`** - Lighthouse PWA score (0 to 1)
 - **`AXE_MAX_VIOLATIONS`** - Maximum allowed accessibility violations for Axe tests
-- **`TRACE`** - Trace mode for debugging (`off`, `on`, `on-first-retry`, `retain-on-failure`, `on-all-retries`)
+
+**Note**:
+
+- All environment variables are accessible via `getEnvironment()` exported from `@world`, which returns a structured `EnvironmentConfig` object. See `tests/utils/environment.ts` for the complete interface definition.
+- Challenge-specific base URLs are accessed via `environment(\`BASE*URL*${challengeName.toUpperCase()}\`)!`exported from`@world`. Each challenge must define its own`BASE*URL*<CHALLENGE>`variable (e.g.,`BASE_URL_UITESTINGPLAYGROUND`,`BASE_URL_AUTOMATIONEXERCISE`).
 
 **CI/CD Configuration:**
 
 - CI uses `.env.production` (committed to repo) with production defaults
-- `BASE_URL` is overridden from GitHub Secrets (Repository → Settings → Secrets and variables → Actions → New repository secret)
+- All environment variables come from `.env.production` (committed to repo)
 - Audit tests override `WORKERS=1` via workflow env vars to avoid rate limiting
 
 #### CI vs Local Configuration Differences

@@ -30,12 +30,12 @@ graph TB
     C -->|Uses| D[Page Object Models]
     D -->|Injected via| E[Fixtures]
     E -->|Provides| F[Page Instance]
-    E -->|Calls| M[getEnvironment Function]
+    E -->|Calls| M[getEnvironment Function in world.ts]
     M -->|Reads from| N[Environment Variables .env]
     E -->|Provides| P[Config Data]
 
     D -->|Interacts with| I[Web Application]
-    I -->|Target App| J[Cable Guy Tool]
+    I -->|Target App| J[UITestingPlayground]
 
     K[Playwright Config] -->|Configures| C
     K -->|Populates| N
@@ -64,7 +64,7 @@ sequenceDiagram
     BDDGen-->>NPM: Files generated
     NPM->>Playwright: playwright test
     Playwright->>Browser: Launch browser
-    Browser->>Site: Navigate to Cable Guy
+    Browser->>Site: Navigate to UITestingPlayground
     Site-->>Browser: Page loaded
     Browser->>POM: Execute step definitions
     POM->>Browser: Interact with page
@@ -85,10 +85,9 @@ The test framework uses a layered architecture combining Page Object Models (POM
 
 POMs encapsulate page interactions and define step definitions using decorators:
 
-- **`CableConfiguratorPage`**: Main application interactions with cable selection, manufacturer filtering, and basket functionality
-- **`CableSelectorPopup`**: Cable selector popup dialog interactions
-- **`CookieBanner`**: Cookie banner dialog handling
-- **`ProductDetailPage`**: Product detail page interactions
+- **`HomePage`**: Main navigation page with links to all UITestingPlayground challenges
+- **`DynamicIdPage`**, **`ClassAttributePage`**, **`VerifyTextPage`**, etc.: Individual challenge page interactions
+- **`AlertHandler`**, **`SuccessLabel`**, **`BasePage`**: Reusable component POMs for common patterns
 
 Each POM:
 
@@ -107,15 +106,15 @@ graph LR
     B -->|Adds| D[Page Fixtures]
 
     C -->|Provides| F[Page Instance]
-    C -->|Calls| M[getEnvironment Function]
+    C -->|Calls| M[getEnvironment Function in world.ts]
     M -->|Reads| N[Environment Variables process.env]
     M -->|Returns| E[Config Object]
     C -->|Provides| E
 
-    D -->|Provides| G[CableConfiguratorPage]
-    D -->|Provides| H[CableSelectorPopup]
-    D -->|Provides| I[CookieBanner]
-    D -->|Provides| J[ProductDetailPage]
+    D -->|Provides| G[HomePage]
+    D -->|Provides| H[DynamicIdPage]
+    D -->|Provides| I[AjaxDataPage]
+    D -->|Provides| J[Other Challenge Pages...]
 
     L[Playwright Config] -->|Populates| N
     K[POMs] -->|Reads| N
@@ -126,11 +125,11 @@ The fixture system centralizes dependency management and ensures consistent test
 **World Fixture**: Provides `world` object containing:
 
 - **`world.page`**: Playwright page instance
-- **`world.data`**: Processed environment configuration object (via `getEnvironment()` function)
+- **`world.data`**: Processed environment configuration object (via `getEnvironment()` function exported from `world.ts`)
 - **`world.testContext`**: Test context object for tracking test steps and state (used for bug reporting)
 - **`world.testInfo`**: Playwright TestInfo instance for test metadata and attachments
 
-The fixture calls `getEnvironment()` which reads from `process.env` and returns a structured configuration object.
+The fixture calls `getEnvironment()` (defined and exported in `world.ts`) which reads from `process.env` and returns a structured configuration object.
 
 **Environment Variables**: All configuration is read from `.env` files loaded via `dotenv`:
 
@@ -141,9 +140,9 @@ The fixture calls `getEnvironment()` which reads from `process.env` and returns 
 
 Variables from `process.env` are consumed by:
 
-- Playwright config (test configuration like `TIMEOUT`, `WORKERS`, `BASE_URL`)
-- Fixtures (via `getEnvironment()` function which processes `process.env` into structured config)
-- POMs (for direct `BASE_URL` access)
+- Playwright config (test configuration like `TIMEOUT`, `WORKERS`, challenge-specific `BASE_URL_<CHALLENGE>`)
+- Fixtures (via `getEnvironment()` function in `world.ts` which processes `process.env` into structured config)
+- POMs (for challenge-specific base URL access via `environment(\`BASE*URL*${challengeName.toUpperCase()}\`)!`exported from`@world`)
 
 **Note**: Audit test suites (`axe.spec.ts`, `lighthouse.spec.ts`) run as separate projects in the unified `playwright.config.ts`, but are not part of the core BDD test architecture.
 
@@ -188,22 +187,27 @@ This creates **indirection**: Gherkin → step definition file → POM method, r
 **Decorator approach ✅** (direct co-location) maps steps directly in POM classes:
 
 ```typescript
-import { Fixture, Given, When, Then, Step } from '@world';
+import { Fixture, Given, When, Then, Step, expect, environment, type Page } from '@world';
 
-@Fixture('CableConfiguratorPage')
-export class CableConfiguratorPage {
-  constructor(protected page: Page) {}
+@Fixture('HomePage')
+export class HomePage {
+  private pageTitleLocator: Locator;
 
-  @When('I click the cable beginning button')
-  async clickCableBeginning(): Promise<void> {
-    await this.iVerifyCableConfiguratorReady();
-    await this.page.getByRole('button', { name: 'cable beginning' }).click();
+  constructor(protected page: Page) {
+    this.pageTitleLocator = this.page.getByRole('heading', { level: 1 });
+  }
+
+  @Given('I navigate to the UITestingPlayground home page')
+  async navigate(): Promise<void> {
+    const baseUrl = environment('BASE_URL_UITESTINGPLAYGROUND')!;
+    await this.page.goto(baseUrl);
+    await this.iSeeTheHomePage();
   }
 
   @Step
-  private async iVerifyCableConfiguratorReady(): Promise<void> {
+  private async iSeeTheHomePage(): Promise<void> {
     // Internal step that appears in test reports
-    await expect(this.page.locator('.cg-configurator')).toBeVisible();
+    await expect(this.pageTitleLocator).toBeVisible();
   }
 }
 ```

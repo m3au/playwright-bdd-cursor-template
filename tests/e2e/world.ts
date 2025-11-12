@@ -1,6 +1,5 @@
 import type { Page, TestInfo } from '@playwright/test';
 import { test as bddTest } from 'playwright-bdd';
-import { getEnvironment } from '@data/config';
 import {
   appendBugReport,
   clearTestContext,
@@ -8,6 +7,7 @@ import {
   attachFileFromStep,
   createBugReport,
   type TestContext,
+  getEnvironment,
 } from '@utils';
 
 export { expect } from '@playwright/test';
@@ -15,12 +15,10 @@ export type { Locator, Page, TestInfo } from '@playwright/test';
 export { Fixture, Given, Then, When } from 'playwright-bdd/decorators';
 export type { TestContext } from '@utils';
 export { attachFileFromStep, Step } from '@utils';
+export { getEnvironment, environment } from '@utils';
+export type { EnvironmentConfig, DataConfig } from '@utils';
 
 export const test = bddTest.extend<{
-  CableConfiguratorPage: unknown;
-  CableSelectorPopup: unknown;
-  CookieBanner: unknown;
-  ProductDetailPage: unknown;
   testInfo: TestInfo;
   world: {
     page: Page;
@@ -31,29 +29,6 @@ export const test = bddTest.extend<{
 }>({
   testInfo: async ({}, use, testInfo: TestInfo) => {
     await use(testInfo);
-  },
-  CableConfiguratorPage: async (
-    { page }: { page: Page },
-    use: (value: unknown) => Promise<void>,
-  ) => {
-    const { CableConfiguratorPage } = await import('@pages/configurator-page');
-    const pom = new CableConfiguratorPage(page);
-    await use(pom);
-  },
-  CableSelectorPopup: async ({ page }: { page: Page }, use: (value: unknown) => Promise<void>) => {
-    const { CableSelectorPopup } = await import('@components/cable-selector-popup');
-    const pom = new CableSelectorPopup(page);
-    await use(pom);
-  },
-  CookieBanner: async ({ page }: { page: Page }, use: (value: unknown) => Promise<void>) => {
-    const { CookieBanner } = await import('@components/cookie-banner');
-    const pom = new CookieBanner(page);
-    await use(pom);
-  },
-  ProductDetailPage: async ({ page }: { page: Page }, use: (value: unknown) => Promise<void>) => {
-    const { ProductDetailPage } = await import('@pages/product-detail-page');
-    const pom = new ProductDetailPage(page);
-    await use(pom);
   },
   world: async ({ page, testInfo }, use) => {
     const data = getEnvironment();

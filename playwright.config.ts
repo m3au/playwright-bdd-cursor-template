@@ -11,35 +11,63 @@ if (!existsSync('.env')) {
 
 dotenv.config({ debug: false, quiet: true });
 
+function createChallengeProject(
+  challengeName: string,
+  browserName: 'chromium' | 'firefox' | 'webkit',
+  deviceName: 'Desktop Chrome' | 'Desktop Firefox' | 'Desktop Safari',
+): PlaywrightTestConfig {
+  const browserProject = getBrowserProject(browserName, deviceName);
+  const challengeBaseUrl = environment(`BASE_URL_${challengeName.toUpperCase()}`)!;
+  return {
+    name: `${challengeName}-${browserName}`,
+    testDir: defineBddConfig({
+      features: `tests/e2e/challenges/${challengeName}/**/*.feature`,
+      steps: `tests/e2e/challenges/${challengeName}/**/*.ts`,
+      outputDir: `test-output/bdd-gen/${challengeName}`,
+      importTestFrom: `tests/e2e/challenges/${challengeName}/world.ts`,
+      disableWarnings: { importTestFrom: true },
+    }),
+    testMatch: ['**/*.spec.js'],
+    use: {
+      ...browserProject.use,
+      baseURL: challengeBaseUrl,
+      trace: environment('TRACE')! as NonNullable<PlaywrightTestConfig['use']>['trace'],
+      screenshot: environment('SCREENSHOT')! as NonNullable<
+        PlaywrightTestConfig['use']
+      >['screenshot'],
+      headless: !environment('HEADED'),
+    },
+  };
+}
+
+const challenges = ['uitestingplayground', 'automationexercise'];
+
 const config: PlaywrightTestConfig = {
-  testDir: defineBddConfig({
-    features: 'tests/e2e/features/**/*.feature',
-    steps: 'tests/e2e/poms/**/*.ts',
-    outputDir: 'test-output/bdd-gen',
-    importTestFrom: 'tests/e2e/world.ts',
-    disableWarnings: { importTestFrom: true },
-  }),
-  testMatch: ['**/*.spec.ts', '**/*.test.ts', '**/*.spec.js', '**/*.test.js'],
-  fullyParallel: environment('FULLY_PARALLEL') !== 'false',
-  forbidOnly: false,
-  retries: +environment('RETRIES'),
-  repeatEach: +environment('REPEAT_EACH'),
-  // eslint-disable-next-line unicorn/no-unreadable-iife
-  workers: ((v) => (v.endsWith('%') ? v : +v))(environment('WORKERS')),
-  timeout: +environment('TIMEOUT'),
-  expect: { timeout: +environment('EXPECT_TIMEOUT') },
+  fullyParallel: !!environment('FULLY_PARALLEL'),
+  forbidOnly: !!environment('FORBID_ONLY'),
+  retries: +environment('RETRIES')!,
+  repeatEach: +environment('REPEAT_EACH')!,
+  maxFailures: +environment('MAX_FAILURES')!,
+  workers: (() => {
+    const workersValue = environment('WORKERS')!;
+    return workersValue.endsWith('%') ? workersValue : +workersValue;
+  })(),
+  timeout: +environment('TIMEOUT')!,
+  expect: { timeout: +environment('EXPECT_TIMEOUT')! },
   reporter: [['html', { open: 'never', outputFolder: 'test-output/playwright-report' }], ['line']],
   outputDir: 'test-output/test-results',
-  use: {
-    baseURL: environment('BASE_URL'),
-    trace: environment('TRACE') as NonNullable<PlaywrightTestConfig['use']>['trace'],
-    screenshot: environment('SCREENSHOT') as NonNullable<PlaywrightTestConfig['use']>['screenshot'],
-    headless: !environment('HEADED'),
-  },
   projects: [
-    ...(environment('CHROMIUM') ? [getBrowserProject('chromium', 'Desktop Chrome')] : []),
-    ...(environment('FIREFOX') ? [getBrowserProject('firefox', 'Desktop Firefox')] : []),
-    ...(environment('WEBKIT') ? [getBrowserProject('webkit', 'Desktop Safari')] : []),
+    // Create challenge projects for each browser
+    ...challenges.flatMap(
+      (challenge) =>
+        [
+          !!environment('CHROMIUM') &&
+            createChallengeProject(challenge, 'chromium', 'Desktop Chrome'),
+          !!environment('FIREFOX') &&
+            createChallengeProject(challenge, 'firefox', 'Desktop Firefox'),
+          !!environment('WEBKIT') && createChallengeProject(challenge, 'webkit', 'Desktop Safari'),
+        ].filter(Boolean) as PlaywrightTestConfig[],
+    ),
     {
       name: 'lighthouse',
       testDir: 'tests/audit',

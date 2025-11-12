@@ -19,9 +19,8 @@
     "baseUrl": ".",
     "paths": {
       "@world": ["./tests/e2e/world.ts"],
-      "@components/*": ["./tests/e2e/poms/components/*"],
-      "@pages/*": ["./tests/e2e/poms/pages/*"],
-      "@data/*": ["./tests/e2e/data/*"],
+      "@components/*": ["./tests/e2e/challenges/uitestingplayground/poms/components/*"],
+      "@pages/*": ["./tests/e2e/challenges/uitestingplayground/poms/pages/*"],
       "@utils": ["./tests/utils/index.ts"],
       "@scripts/*": ["./scripts/*"]
     },

@@ -7,6 +7,7 @@
 
 - **ci**: rename unit tests to Pre-flight Checks
 ### Added
+- implement challenge-based test architecture
 
 - **ci**: add descriptive annotations for each test workflow
 - **ci**: add clickable report links in job summary

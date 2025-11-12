@@ -1,9 +1,9 @@
-# 🤖 Playwright Pilot
+# 🤖 Playwright Pilot <!-- omit from toc -->
 
 **AI-Piloted E2E Testing with Playwright & BDD**
 
 [![CI](https://github.com/m3au/playwright-pilot/actions/workflows/ci.yml/badge.svg)](https://github.com/m3au/playwright-pilot/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen)](tests/unit/)
+[![Coverage](https://img.shields.io/badge/Coverage-100.00%25-brightgreen)](tests/unit/)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-enabled-brightgreen)](https://github.com/features/actions)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24.0.0-brightgreen)](https://nodejs.org/)
@@ -29,31 +29,44 @@
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-enabled-brightgreen)](https://pages.github.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-![Cyberpunk animation showing futuristic cityscape](docs/cyberpunk.gif)
+![Cyberpunk animation showing futuristic cityscape](docs/images/cyberpunk.gif)
 
 ## Table of Contents <!-- omit from toc -->
 
-- [🤖 Playwright Pilot](#-playwright-pilot)
-  - [About](#about)
-  - [Test Reports](#test-reports)
-  - [Documentation](#documentation)
-  - [Project Structure](#project-structure)
-  - [Quick Setup](#quick-setup)
-  - [Architecture \& Patterns](#architecture--patterns)
-  - [AI Assistance](#ai-assistance)
-  - [Code Quality](#code-quality)
+- [About](#about)
+- [Test Scenarios](#test-scenarios)
+  - [UITestingPlayground Challenge](#uitestingplayground-challenge)
+  - [Element Identification (5 scenarios)](#element-identification-5-scenarios)
+  - [Timing \& Synchronization (7 scenarios)](#timing--synchronization-7-scenarios)
+  - [Interaction Challenges (5 scenarios)](#interaction-challenges-5-scenarios)
+  - [Advanced Challenges (6 scenarios)](#advanced-challenges-6-scenarios)
+- [Test Reports](#test-reports)
+- [Documentation](#documentation)
+- [Project Structure](#project-structure)
+- [Quick Setup](#quick-setup)
+- [Architecture \& Patterns](#architecture--patterns)
+  - [Challenge-Based Organization](#challenge-based-organization)
+  - [Page Object Model (POM)](#page-object-model-pom)
+  - [World Fixture](#world-fixture)
+  - [BDD with Gherkin](#bdd-with-gherkin)
+- [AI Assistance](#ai-assistance)
+- [Code Quality](#code-quality)
 
 ---
 
 ## About
 
-This project implements a complete Playwright E2E test automation framework with:
+This project is a **multi-challenge test automation repository** that tackles various web testing challenges from different platforms. Each challenge is organized in its own folder under `tests/e2e/challenges/`, allowing for easy expansion and maintenance.
+
+**Current Challenge: UITestingPlayground**
+
+This repository currently implements **23 comprehensive test scenarios** from [UITestingPlayground](http://uitestingplayground.com/), demonstrating real-world automation challenges and solutions. The framework includes:
 
 - **AI-Assisted Development**: Optimized for **Cursor IDE** with custom rules to enforce project conventions
 - **Behavior-Driven Development (BDD)**: Utilizes Gherkin and `playwright-bdd` for clear, collaborative feature development
 - **Decorated Page Object Model (POM)**: Eliminates separate step files by using **TypeScript decorators** (`@Given`, `@When`, `@Then`) directly on POM methods
 - **TypeScript**: Full type safety with strict mode enabled
-- **High-Speed Runtime**: Leverages **Bun** as both package manager and runtime for blazing-fast execution
+- **High-Speed Runtime**: Leverages **Bun** as both package manager and runtime for blazing-fast execution, with horizontal scaling via Playwright workers and vertical scaling through sharding
 - **Accessibility Testing**: Axe-core integration for automated WCAG compliance audits
 - **Performance Testing**: Lighthouse integration for Core Web Vitals and performance audits
 - **Interactive HTML Reports**: Automatically published to a dedicated **GitHub Pages dashboard** (including traces and media)
@@ -65,13 +78,58 @@ This project implements a complete Playwright E2E test automation framework with
 
 ---
 
+## Test Scenarios
+
+### UITestingPlayground Challenge
+
+This challenge showcases **23 comprehensive test scenarios** from [UITestingPlayground](http://uitestingplayground.com/), demonstrating various automation challenges and best practices:
+
+### Element Identification (5 scenarios)
+
+- **Dynamic ID** - Click button without relying on dynamic IDs
+- **Class Attribute** - Handle complex class attributes with special characters
+- **Verify Text** - Find elements with text split across DOM nodes
+- **Non-Breaking Space** - Handle non-breaking spaces in text matching
+- **Sample App** - Login flow with dynamically generated attributes
+
+### Timing & Synchronization (7 scenarios)
+
+- **Load Delay** - Wait for page elements to load
+- **AJAX Data** - Handle elements appearing after AJAX requests
+- **Client Side Delay** - Wait for client-side JavaScript calculations
+- **Progress Bar** - Monitor and interact with progress indicators
+- **Animated Button** - Wait for animations to complete
+- **Disabled Input** - Wait for input fields to become enabled
+- **Auto Wait** - Wait for elements to become interactable
+
+### Interaction Challenges (5 scenarios)
+
+- **Click** - Handle buttons that ignore DOM click events
+- **Text Input** - Enter text using physical keyboard input
+- **Mouse Over** - Handle DOM changes triggered by hover events
+- **Scrollbars** - Scroll elements into view before interaction
+- **Overlapped Element** - Handle elements covered by other elements
+
+### Advanced Challenges (6 scenarios)
+
+- **Dynamic Table** - Extract and verify values from dynamic tables
+- **Shadow DOM** - Interact with elements inside Shadow DOM
+- **Visibility** - Verify element visibility states (opacity, display, position)
+- **Hidden Layers** - Handle z-order stacking and overlapped elements
+- **Alerts** - Accept/dismiss browser dialogs and prompts
+- **File Upload** - Upload files through iframe-based file inputs
+
+All scenarios are implemented using **BDD (Gherkin)** feature files and **Page Object Model (POM)** patterns with TypeScript decorators.
+
+---
+
 ## Test Reports
 
-![Test Reports Dashboard](docs/reports.jpg)
+![Test Reports Dashboard](docs/images/dashboard.png)
 
-Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/tech-challenge/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
+Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/playwright-pilot/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
 
-View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-pilot/actions), we're running 30 tests using 2 shards (WORKERS=100% per shard).
+View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-pilot/actions), we're running **23 E2E test scenarios** from the UITestingPlayground challenge using 2 shards (WORKERS=100% per shard).
 
 ---
 
@@ -94,62 +152,67 @@ A high-level view of the project's directory structure:
 
 ```text
 playwright-pilot/
-├── .cursor/                   # Cursor IDE configuration
-│   ├── mcp.json               # MCP servers (Playwright, GitHub)
-│   ├── hooks/                 # Example hook scripts (copy to ~/.cursor/hooks/ to use)
-│   └── rules/                 # Cursor rules (commits, comments, testing, etc.)
-├── **.github/**               # GitHub configuration
-│   ├── **workflows/**         # CI/CD workflows (GitHub Actions)
-│   │   ├── ci.yml             # Main CI orchestrator workflow + report publishing
-│   │   ├── preflight.yml      # Pre-flight checks (lint + unit tests)
-│   │   ├── test.yml           # E2E tests workflow
-│   │   ├── lighthouse.yml     # Lighthouse audit workflow
-│   │   ├── axe.yml            # Axe audit workflow
-│   │   └── dependabot.yml     # Dependabot workflow (pins versions on PRs)
-│   ├── dependabot.yml         # Dependabot configuration (dependency updates)
-│   └── templates/             # Report templates (HTML)
-├── .husky/                    # Git hooks (pre-commit, commit-msg, prepare-commit-msg, pre-push)
-├── **tests/**                 # All test suites
-│   ├── **e2e/**               # End-to-end tests
-│   │   ├── data/              # Data layer (environment configs)
-│   │   ├── **features/**      # Gherkin feature files
-│   │   ├── **poms/**          # Page Object Models with decorators
-│   │   │   ├── components/    # Reusable component POMs
-│   │   │   └── pages/         # Page POMs
-│   │   └── **world.ts**       # Playwright fixtures and test setup
-│   ├── utils/                 # Shared utility functions
-│   ├── unit/                  # Unit tests (100% coverage)
-│   └── audit/                 # Audit tests (axe, lighthouse)
-├── **scripts/**               # Utility scripts
-│   ├── bump-version.mjs       # Automatic version bumping
-│   ├── pin-versions.mjs       # Dependency version pinning
-│   ├── changelog.mjs          # Changelog generation
-│   └── lint.mjs               # Unified linting: TypeScript → ESLint → ShellCheck
-├── docs/                      # Documentation
-├── Makefile                   # Make targets for local workflow testing
-├── package.json               # Dependencies and scripts
-├── bun.lock                   # Bun lock file (pinned dependency versions)
-├── bunfig.toml                # Bun package manager configuration
-├── playwright.config.ts       # Playwright E2E configuration
-├── eslint.config.mjs          # ESLint configuration
-├── prettier.config.mjs        # Prettier configuration
-├── tsconfig.json              # TypeScript configuration
-├── main.code-workspace        # VS Code workspace configuration
-├── .cspell.jsonc              # Spell checker configuration
-├── .markdownlint.jsonc        # Markdown linting configuration
-├── .lintstagedrc.json         # lint-staged configuration
-├── .prettierignore            # Prettier ignore patterns
-├── .editorconfig              # Editor configuration (indentation, encoding)
-├── .gitignore                 # Git ignore patterns
-├── .gitattributes             # Git attributes (line endings, file types)
-├── .cursorignore              # Cursor IDE ignore patterns
-├── .nvmrc                     # Node version manager version
-├── .npmrc                     # npm configuration
-├── .env                       # Environment variables (local, gitignored)
-├── .env.example               # Environment variables template
-├── .env.production            # Production environment variables template
-├── LICENSE                    # License file
-└── README.md                  # This file
+├── .cursor/                          # Cursor IDE configuration
+│   ├── mcp.json                      # MCP servers (Playwright, GitHub)
+│   ├── hooks/                        # Example hook scripts (copy to ~/.cursor/hooks/ to use)
+│   └── rules/                        # Cursor rules (commits, comments, testing, etc.)
+├── **.github/**                      # GitHub configuration
+│   ├── **workflows/**                # CI/CD workflows (GitHub Actions)
+│   │   ├── ci.yml                    # Main CI orchestrator workflow + report publishing
+│   │   ├── preflight.yml             # Pre-flight checks (lint + unit tests)
+│   │   ├── test.yml                  # E2E tests workflow
+│   │   ├── lighthouse.yml            # Lighthouse audit workflow
+│   │   ├── axe.yml                   # Axe audit workflow
+│   │   └── dependabot.yml            # Dependabot workflow (pins versions on PRs)
+│   ├── dependabot.yml                # Dependabot configuration (dependency updates)
+│   └── templates/                    # Report templates (HTML)
+├── .husky/                           # Git hooks (pre-commit, commit-msg, prepare-commit-msg, pre-push)
+├── **tests/**                        # All test suites
+│   ├── **e2e/**                      # End-to-end tests
+│   │   ├── challenges/               # Challenge-specific test suites
+│   │   │   ├── uitestingplayground/  # UITestingPlayground challenge
+│   │   │   │   ├── features/         # Gherkin feature files
+│   │   │   │   └── poms/             # Page Object Models with decorators
+│   │   │   │       ├── components/   # Reusable component POMs
+│   │   │   │       └── pages/        # Page POMs
+│   │   │   └── automationexercise/   # AutomationExercise challenge
+│   │   │       ├── features/         # Gherkin feature files
+│   │   │       └── poms/             # Page Object Models with decorators
+│   │   │           └── pages/        # Page POMs
+│   │   └── **world.ts**              # Playwright fixtures, test setup, and environment config
+│   ├── utils/                        # Shared utility functions
+│   ├── unit/                         # Unit tests (100% coverage)
+│   └── audit/                        # Audit tests (axe, lighthouse)
+├── **scripts/**                      # Utility scripts
+│   ├── bump-version.mjs              # Automatic version bumping
+│   ├── pin-versions.mjs              # Dependency version pinning
+│   ├── changelog.mjs                 # Changelog generation
+│   └── lint.mjs                      # Unified linting: TypeScript → ESLint → ShellCheck
+├── docs/                             # Documentation
+├── Makefile                          # Make targets for local workflow testing
+├── package.json                      # Dependencies and scripts
+├── bun.lock                          # Bun lock file (pinned dependency versions)
+├── bunfig.toml                       # Bun package manager configuration
+├── playwright.config.ts              # Playwright E2E configuration
+├── eslint.config.mjs                 # ESLint configuration
+├── prettier.config.mjs               # Prettier configuration
+├── tsconfig.json                     # TypeScript configuration
+├── main.code-workspace               # VS Code workspace configuration
+├── .cspell.jsonc                     # Spell checker configuration
+├── .markdownlint.jsonc               # Markdown linting configuration
+├── .lintstagedrc.json                # lint-staged configuration
+├── .prettierignore                   # Prettier ignore patterns
+├── .editorconfig                     # Editor configuration (indentation, encoding)
+├── .gitignore                        # Git ignore patterns
+├── .gitattributes                    # Git attributes (line endings, file types)
+├── .cursorignore                     # Cursor IDE ignore patterns
+├── .nvmrc                            # Node version manager version
+├── .npmrc                            # npm configuration
+├── .env                              # Environment variables (local, gitignored)
+├── .env.example                      # Environment variables template
+├── .env.production                   # Production environment variables template
+├── LICENSE                           # License file
+└── README.md                         # This file
 ```
 
 ---
@@ -213,13 +276,63 @@ make help        # Show all available workflow test targets
 
 ## Architecture & Patterns
 
-**Page Object Model (POM):** Located in `tests/e2e/poms/`. This framework eliminates separate step definition files by applying **BDD decorators** (`@Given`, `@When`, `@Then`) directly to the Page Object methods. POMs are automatically registered as fixtures using the `@Fixture` decorator.
+### Challenge-Based Organization
 
-**World:** Custom Fixture (`tests/e2e/world.ts`) is the central hub. It extends the standard `playwright-bdd` test, registers all POMs (CableConfiguratorPage, CableSelectorPopup, CookieBanner, ProductDetailPage) using the custom `@Fixture` decorator, provides a world fixture containing the Playwright page and environment data, and exports the core BDD decorators (`@Fixture`, `@Given`, `@When`, `@Then`) and Playwright types (`expect`, `Locator`, `Page`). The custom `@Step` decorator for internal step definitions is defined in `tests/utils/decorators.ts` and re-exported from `@world`.
+Each challenge is isolated in its own folder under `tests/e2e/challenges/`, containing:
 
-**Data Layer:** `tests/e2e/data/config.ts` loads environment-specific data for test execution.
+- Feature files (`features/*.feature`)
+- Page Object Models (`poms/pages/` and `poms/components/`)
+- Challenge-specific configuration (`world.ts`)
 
-**BDD with Gherkin:** Feature files are located in `tests/e2e/features/`. Test files are automatically generated to `test-output/bdd-gen/`.
+This structure allows for easy addition of new challenges without affecting existing ones.
+
+### Page Object Model (POM)
+
+POMs are located within each challenge folder (e.g., `tests/e2e/challenges/uitestingplayground/poms/`).
+
+**Key Features:**
+
+- **BDD decorators** (`@Given`, `@When`, `@Then`) are applied directly to POM methods
+- Eliminates separate step definition files
+- POMs are automatically registered as fixtures using `@Fixture` decorator
+
+### World Fixture
+
+The `tests/e2e/world.ts` file is the central hub that:
+
+**Extends Playwright-BDD:**
+
+- Extends the standard `playwright-bdd` test
+- Registers all POMs from all challenges using `@Fixture` decorator
+
+**Provides Core Exports:**
+
+- BDD decorators: `@Fixture`, `@Given`, `@When`, `@Then`
+- Playwright types: `expect`, `Locator`, `Page`
+- Custom `@Step` decorator (for internal step definitions)
+
+**Environment Configuration:**
+
+- `getEnvironment()` - Loads environment-specific configuration data
+- `environment(name)` - Accesses environment variables directly
+
+**Configuration Requirements:**
+
+Each challenge must define its own `BASE_URL_<CHALLENGE>` variable (accessed via `environment(\`BASE*URL*${challengeName.toUpperCase()}\`)!`):
+
+- `BASE_URL_UITESTINGPLAYGROUND`
+- `BASE_URL_AUTOMATIONEXERCISE`
+
+### BDD with Gherkin
+
+Feature files are located within each challenge folder. Test files are automatically generated to `test-output/bdd-gen/`.
+
+**UITestingPlayground Features:**
+
+- `element-identification.feature` - 5 scenarios
+- `timing-synchronization.feature` - 7 scenarios
+- `interaction-challenges.feature` - 5 scenarios
+- `advanced-challenges.feature` - 6 scenarios
 
 ## AI Assistance
 

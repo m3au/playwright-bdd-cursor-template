@@ -3,6 +3,7 @@
 ## [1.5.6] - 2025-11-05
 
 ### Refactored
+- remove cable-guy implementation
 
 - **ci**: rename unit tests to Pre-flight Checks
 ### Added
@@ -53,7 +54,7 @@
 
 ### Fixed
 
-- **ci**: correct GitHub Pages URL to tech-challenge
+- **ci**: correct GitHub Pages URL to playwright-pilot
 
 ## [1.5.0] - 2025-11-05
 

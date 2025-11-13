@@ -6,8 +6,12 @@ export function environment(name: string): string | undefined {
   return value === '' ? undefined : value;
 }
 
+export interface AuditTarget {
+  name: string;
+  url: string;
+}
+
 export interface EnvironmentConfig {
-  baseUrl: string;
   timeout: number;
   expectTimeout: number;
   workers: number | string;
@@ -54,6 +58,8 @@ export interface EnvironmentConfig {
   lighthouseSEO: number;
   lighthousePWA: number;
   axeMaxViolations: number;
+  axeTargets: AuditTarget[];
+  lighthouseTargets: AuditTarget[];
 }
 
 export interface DataConfig {
@@ -62,7 +68,6 @@ export interface DataConfig {
 
 export function getEnvironment(): DataConfig & { environment: EnvironmentConfig } {
   const config: EnvironmentConfig = {
-    baseUrl: environment('BASE_URL')!,
     timeout: +environment('TIMEOUT')!,
     expectTimeout: +environment('EXPECT_TIMEOUT')!,
     workers: environment('WORKERS')!,
@@ -109,6 +114,15 @@ export function getEnvironment(): DataConfig & { environment: EnvironmentConfig 
     lighthouseSEO: +environment('LIGHTHOUSE_SEO')!,
     lighthousePWA: +environment('LIGHTHOUSE_PWA')!,
     axeMaxViolations: +environment('AXE_MAX_VIOLATIONS')!,
+    axeTargets: [
+      { name: 'w3c-bad', url: environment('BASE_URL_AXE_W3C_BAD')! },
+      { name: 'w3c-after', url: environment('BASE_URL_AXE_W3C_AFTER')! },
+      { name: 'deque-mars', url: environment('BASE_URL_AXE_DEQUE_MARS')! },
+    ],
+    lighthouseTargets: [
+      { name: 'polymer-shop', url: environment('BASE_URL_LIGHTHOUSE_POLYMER')! },
+      { name: 'w3c-bad', url: environment('BASE_URL_LIGHTHOUSE_W3C_BAD')! },
+    ],
   };
 
   return {

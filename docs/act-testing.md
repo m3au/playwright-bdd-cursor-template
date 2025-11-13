@@ -54,7 +54,7 @@ make ci
 Workflows use environment variables from `.env.production` (committed to repo). To run these locally, **you must ensure the required variables are defined** in your local [`.env`](../.env) file. `act` is configured to automatically read environment variables from this file via the `ACT_FLAGS` variable in the `Makefile`.
 
 - **Mandatory Variables:** Ensure all `BASE_URL_<CHALLENGE>` variables are defined in `.env` (e.g., `BASE_URL_UITESTINGPLAYGROUND`, `BASE_URL_AUTOMATIONEXERCISE`)
-- **Note:** `BASE_URL` for audit tests comes from `.env.production` (committed to repo)
+- **Note:** Axe and Lighthouse targets are defined in `.env` / `.env.production` (e.g., `BASE_URL_AXE_W3C_BAD`, `BASE_URL_LIGHTHOUSE_POLYMER`) so no GitHub secrets are required
 
 ### Platform Compatibility
 

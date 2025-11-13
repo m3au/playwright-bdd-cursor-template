@@ -50,7 +50,11 @@ describe('env', () => {
     test('should return environment config with all required variables', () => {
       const originalEnvironment = { ...process.env };
       try {
-        process.env['BASE_URL'] = 'https://example.com';
+        process.env['BASE_URL_AXE_W3C_BAD'] = 'https://bad.example.com';
+        process.env['BASE_URL_AXE_W3C_AFTER'] = 'https://after.example.com';
+        process.env['BASE_URL_AXE_DEQUE_MARS'] = 'https://mars.example.com';
+        process.env['BASE_URL_LIGHTHOUSE_POLYMER'] = 'https://polymer.example.com';
+        process.env['BASE_URL_LIGHTHOUSE_W3C_BAD'] = 'https://lighthouse-bad.example.com';
         process.env['TIMEOUT'] = '30000';
         process.env['EXPECT_TIMEOUT'] = '10000';
         process.env['WORKERS'] = '4';
@@ -89,7 +93,6 @@ describe('env', () => {
 
         const result = getEnvironment();
 
-        expect(result.environment.baseUrl).toBe('https://example.com');
         expect(result.environment.timeout).toBe(30_000);
         expect(result.environment.expectTimeout).toBe(10_000);
         expect(result.environment.workers).toBe('4');
@@ -125,6 +128,15 @@ describe('env', () => {
         expect(result.environment.lighthouseSEO).toBe(0.8);
         expect(result.environment.lighthousePWA).toBe(0.75);
         expect(result.environment.axeMaxViolations).toBe(10);
+        expect(result.environment.axeTargets).toEqual([
+          { name: 'w3c-bad', url: 'https://bad.example.com' },
+          { name: 'w3c-after', url: 'https://after.example.com' },
+          { name: 'deque-mars', url: 'https://mars.example.com' },
+        ]);
+        expect(result.environment.lighthouseTargets).toEqual([
+          { name: 'polymer-shop', url: 'https://polymer.example.com' },
+          { name: 'w3c-bad', url: 'https://lighthouse-bad.example.com' },
+        ]);
       } finally {
         process.env = originalEnvironment;
       }
@@ -133,7 +145,11 @@ describe('env', () => {
     test('should handle optional variables as undefined', () => {
       const originalEnvironment = { ...process.env };
       try {
-        process.env['BASE_URL'] = 'https://example.com';
+        process.env['BASE_URL_AXE_W3C_BAD'] = 'https://bad.example.com';
+        process.env['BASE_URL_AXE_W3C_AFTER'] = 'https://after.example.com';
+        process.env['BASE_URL_AXE_DEQUE_MARS'] = 'https://mars.example.com';
+        process.env['BASE_URL_LIGHTHOUSE_POLYMER'] = 'https://polymer.example.com';
+        process.env['BASE_URL_LIGHTHOUSE_W3C_BAD'] = 'https://lighthouse-bad.example.com';
         process.env['TIMEOUT'] = '30000';
         process.env['EXPECT_TIMEOUT'] = '10000';
         process.env['WORKERS'] = '4';

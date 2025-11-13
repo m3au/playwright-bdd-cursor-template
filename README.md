@@ -36,6 +36,7 @@
 - [About](#about)
 - [Test Scenarios](#test-scenarios)
   - [UITestingPlayground Challenge](#uitestingplayground-challenge)
+  - [AutomationExercise Challenge](#automationexercise-challenge)
   - [Element Identification (5 scenarios)](#element-identification-5-scenarios)
   - [Timing \& Synchronization (7 scenarios)](#timing--synchronization-7-scenarios)
   - [Interaction Challenges (5 scenarios)](#interaction-challenges-5-scenarios)
@@ -58,9 +59,14 @@
 
 This project is a **multi-challenge test automation repository** that tackles various web testing challenges from different platforms. Each challenge is organized in its own folder under `tests/e2e/challenges/`, allowing for easy expansion and maintenance.
 
-**Current Challenge: UITestingPlayground**
+**Current Challenges: UITestingPlayground & AutomationExercise**
 
-This repository currently implements **23 comprehensive test scenarios** from [UITestingPlayground](http://uitestingplayground.com/), demonstrating real-world automation challenges and solutions. The framework includes:
+The repository now covers:
+
+- **UITestingPlayground** — 23 comprehensive scenarios spanning element identification, timing, interaction, and advanced UI puzzles.
+- **AutomationExercise** — Authentication journey (register, login, logout) with resilient flows that auto-generate users, bypass cookie consent walls, and recover from intrusive ad redirects.
+
+The framework includes:
 
 - **AI-Assisted Development**: Optimized for **Cursor IDE** with custom rules to enforce project conventions
 - **Behavior-Driven Development (BDD)**: Utilizes Gherkin and `playwright-bdd` for clear, collaborative feature development
@@ -120,6 +126,22 @@ This challenge showcases **23 comprehensive test scenarios** from [UITestingPlay
 - **File Upload** - Upload files through iframe-based file inputs
 
 All scenarios are implemented using **BDD (Gherkin)** feature files and **Page Object Model (POM)** patterns with TypeScript decorators.
+
+### AutomationExercise Challenge
+
+This challenge focuses on real e-commerce user flows. The first milestone automates the **end-to-end user authentication journey**:
+
+- **Register User** — Generates unique test data, seeds accounts through the site’s multi-step signup, and confirms success.
+- **Login User** — Reuses provisioned credentials to validate repeated access.
+- **Logout User** — Ensures sessions end cleanly and redirects back to the combined signup/login form.
+
+Key platform nuances are handled automatically:
+
+- **Cookie Consent Modal** — Shared component dismisses the `fc-consent` overlay so top-level navigation is never blocked.
+- **Interstitial Ads** — Detection + recovery for `google_vignette` redirects to keep the flow on AutomationExercise.
+- **User Provisioning** — Programmatic API client pre-registers accounts when scenarios need a known user.
+
+Future phases will extend coverage to product browsing, cart management, checkout, and account features.
 
 ---
 
@@ -240,7 +262,9 @@ See [Development Guide](./docs/development.md#environment-configuration) for com
 
 ```shell
 bun run          # List all available project commands
-bun run test     # Run E2E tests (includes pretest step)
+bun run test     # Run all E2E projects (includes pretest step)
+bun run test:automationexercise    # Run AutomationExercise challenge only (includes pretest step)
+bun run test:uitestingplayground   # Run UITestingPlayground challenge only (includes pretest step)
 bun test         # Run unit tests with coverage enabled
 bun pretest      # Generate BDD step files from Gherkin features
 bun ui           # Run tests with Playwright UI

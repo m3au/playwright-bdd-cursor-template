@@ -7,6 +7,7 @@
 
 - **ci**: rename unit tests to Pre-flight Checks
 ### Added
+- **automationexercise**: automate authentication flows
 - add automated coverage badge tooling
 - implement challenge-based test architecture
 

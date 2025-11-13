@@ -5,6 +5,8 @@ import { test as baseTest } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
+import type { AutomationExerciseUser } from '@automationexercise/utils/user-data';
+
 export interface BugReport {
   timestamp: string;
   cableBeginningType: string;
@@ -21,6 +23,10 @@ export interface TestContext {
   cableEndType?: string;
   cableEndConnector?: string;
   steps?: string[];
+  automationExercise?: {
+    user?: AutomationExerciseUser;
+    userRegistered?: boolean;
+  };
 }
 
 // Store test context per test ID (supports parallel test execution)

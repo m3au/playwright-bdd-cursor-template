@@ -21,6 +21,7 @@
       "@world": ["./tests/e2e/world.ts"],
       "@components/*": ["./tests/e2e/challenges/uitestingplayground/poms/components/*"],
       "@pages/*": ["./tests/e2e/challenges/uitestingplayground/poms/pages/*"],
+      "@automationexercise/*": ["./tests/e2e/challenges/automationexercise/*"],
       "@utils": ["./tests/utils/index.ts"],
       "@scripts/*": ["./scripts/*"]
     },

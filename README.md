@@ -86,9 +86,14 @@ The framework includes:
 
 ## Test Scenarios
 
+**📚 Challenge Documentation**: For comprehensive details on each challenge, see:
+
+- **[UITestingPlayground Challenge Documentation](./docs/uitestingplayground-challenge.md)** - Complete guide to all 23 scenarios
+- **[AutomationExercise Challenge Documentation](./docs/automationexercise-challenge.md)** - Complete guide to all 18 scenarios
+
 ### UITestingPlayground Challenge
 
-This challenge showcases **23 comprehensive test scenarios** from [UITestingPlayground](http://uitestingplayground.com/), demonstrating various automation challenges and best practices:
+This challenge showcases **23 comprehensive test scenarios** from [UITestingPlayground](http://uitestingplayground.com/), demonstrating various automation challenges and best practices. See the [full challenge documentation](./docs/uitestingplayground-challenge.md) for exhaustive details.
 
 ### Element Identification (5 scenarios)
 
@@ -129,19 +134,23 @@ All scenarios are implemented using **BDD (Gherkin)** feature files and **Page O
 
 ### AutomationExercise Challenge
 
-This challenge focuses on real e-commerce user flows. The first milestone automates the **end-to-end user authentication journey**:
+This challenge implements **18 comprehensive e-commerce test scenarios** covering the complete user journey from registration to order completion. See the [full challenge documentation](./docs/automationexercise-challenge.md) for exhaustive details.
 
-- **Register User** — Generates unique test data, seeds accounts through the site’s multi-step signup, and confirms success.
-- **Login User** — Reuses provisioned credentials to validate repeated access.
-- **Logout User** — Ensures sessions end cleanly and redirects back to the combined signup/login form.
+**Implemented Features**:
 
-Key platform nuances are handled automatically:
+- **User Authentication** (3 scenarios) — Registration, login, logout with API-backed user provisioning
+- **Product Browsing** (3 scenarios) — Product listing, search, and detailed product views
+- **Shopping Cart** (4 scenarios) — Add, view, update, and remove products from cart
+- **Checkout Process** (2 scenarios) — Order placement, payment processing, and confirmation
+- **User Account Management** (4 scenarios) — Account dashboard, profile updates, order history, invoice downloads
+- **Contact & Support** (2 scenarios) — Contact form submission with file uploads
 
-- **Cookie Consent Modal** — Shared component dismisses the `fc-consent` overlay so top-level navigation is never blocked.
-- **Interstitial Ads** — Detection + recovery for `google_vignette` redirects to keep the flow on AutomationExercise.
-- **User Provisioning** — Programmatic API client pre-registers accounts when scenarios need a known user.
+**Key Platform Handling**:
 
-Future phases will extend coverage to product browsing, cart management, checkout, and account features.
+- **Cookie Consent Modal** — Automatic dismissal of `fc-consent` overlay
+- **Interstitial Ads** — Detection and recovery from `google_vignette` redirects
+- **User Provisioning** — API client for programmatic account creation
+- **Test Data Generation** — Unique, realistic user data for each test run
 
 ---
 
@@ -151,13 +160,20 @@ Future phases will extend coverage to product browsing, cart management, checkou
 
 Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/playwright-pilot/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
 
-View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-pilot/actions), we're running **23 E2E test scenarios** from the UITestingPlayground challenge using 2 shards (WORKERS=100% per shard).
+View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-pilot/actions), we're running **41 E2E test scenarios** (23 UITestingPlayground + 18 AutomationExercise) using 2 shards (WORKERS=100% per shard).
 
 ---
 
 ## Documentation
 
-Comprehensive documentation covering architecture, development workflows, code quality tools, AI assistance configuration, and project goals. All documentation is located in the `docs/` directory.
+Comprehensive documentation covering architecture, development workflows, code quality tools, AI assistance configuration, challenge implementations, and project goals. All documentation is located in the `docs/` directory.
+
+### Challenge Documentation
+
+- **[UITestingPlayground Challenge](./docs/uitestingplayground-challenge.md)** - Complete guide to all 23 UI testing scenarios, implementation details, and patterns
+- **[AutomationExercise Challenge](./docs/automationexercise-challenge.md)** - Complete guide to all 18 e-commerce scenarios, user flows, and utilities
+
+### Project Documentation
 
 - **[Architecture Documentation](./docs/architecture.md)** - System architecture, design decisions, and diagrams
 - **[Development Guide](./docs/development.md)** - Development setup, guidelines, and best practices

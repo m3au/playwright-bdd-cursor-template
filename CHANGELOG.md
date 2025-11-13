@@ -17,6 +17,7 @@
 - **ci**: add automatic git tagging and release management
 
 ### Fixed
+- **automationexercise**: resolve linting errors in POM pages
 - **ci**: add Dependabot check to child workflows
 - **ci**: include bun.lock in Dependabot pin-versions commit
 - **ci**: fix Dependabot workflow and remove missing label

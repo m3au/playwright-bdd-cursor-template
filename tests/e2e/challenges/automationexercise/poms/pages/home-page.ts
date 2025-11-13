@@ -29,6 +29,11 @@ export class HomePage {
   private readonly signupLoginButtonLocator: Locator;
   private readonly logoutButtonLocator: Locator;
   private readonly loggedInIndicatorLocator: Locator;
+  private readonly productsButtonLocator: Locator;
+  private readonly cartButtonLocator: Locator;
+  private readonly contactUsButtonLocator: Locator;
+  private readonly loggedInUserNameLocator: Locator;
+  private readonly viewCartButtonLocator: Locator;
   private readonly baseUrl: string;
   private readonly cookieConsentModal: CookieConsentModal;
 
@@ -36,6 +41,11 @@ export class HomePage {
     this.signupLoginButtonLocator = this.page.getByRole('link', { name: /signup|login/i });
     this.logoutButtonLocator = this.page.getByRole('link', { name: /logout/i });
     this.loggedInIndicatorLocator = this.page.getByText(/logged in as/i);
+    this.productsButtonLocator = this.page.getByRole('link', { name: /products/i });
+    this.cartButtonLocator = this.page.getByRole('link', { name: /cart/i });
+    this.contactUsButtonLocator = this.page.getByRole('link', { name: /contact us/i });
+    this.loggedInUserNameLocator = this.page.locator('a').filter({ hasText: /logged in as/i });
+    this.viewCartButtonLocator = this.page.getByRole('link', { name: /view cart/i });
     this.baseUrl = environment('BASE_URL_AUTOMATIONEXERCISE')!;
     this.cookieConsentModal = new CookieConsentModal(this.page);
   }
@@ -89,6 +99,41 @@ export class HomePage {
   async verifyLoggedInAsGeneratedUser(): Promise<void> {
     const state = await this.ensureAutomationExerciseState();
     await this.verifyLoggedIn(state.user.name);
+  }
+
+  @When('I click on Products button')
+  async clickProductsButton(): Promise<void> {
+    await this.cookieConsentModal.acceptAllIfPresent();
+    await expect(this.productsButtonLocator).toBeVisible();
+    await this.productsButtonLocator.click();
+  }
+
+  @When('I click on Cart button')
+  async clickCartButton(): Promise<void> {
+    await this.cookieConsentModal.acceptAllIfPresent();
+    await expect(this.cartButtonLocator).toBeVisible();
+    await this.cartButtonLocator.click();
+  }
+
+  @When('I click on Contact Us button')
+  async clickContactUsButton(): Promise<void> {
+    await this.cookieConsentModal.acceptAllIfPresent();
+    await expect(this.contactUsButtonLocator).toBeVisible();
+    await this.contactUsButtonLocator.click();
+  }
+
+  @When('I click on the logged in user name')
+  async clickLoggedInUserName(): Promise<void> {
+    await this.cookieConsentModal.acceptAllIfPresent();
+    await expect(this.loggedInUserNameLocator).toBeVisible();
+    await this.loggedInUserNameLocator.click();
+  }
+
+  @When('I click View Cart button')
+  async clickViewCartButton(): Promise<void> {
+    await this.cookieConsentModal.acceptAllIfPresent();
+    await expect(this.viewCartButtonLocator).toBeVisible();
+    await this.viewCartButtonLocator.click();
   }
 
   private buildBaseUrlPattern(): RegExp {

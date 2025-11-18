@@ -49,6 +49,7 @@ describe('browser-project', () => {
     process.env['PERMISSIONS'] = '';
     process.env['BROWSER_CHANNEL'] = '';
     process.env['BROWSER_ARGS'] = '';
+    process.env['COLOR_SCHEME'] = '';
   });
 
   afterEach(() => {

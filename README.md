@@ -84,14 +84,22 @@ Most Playwright + BDD setups are either outdated, require separate step-definiti
 
 ## About
 
-This project is a **multi-challenge test automation repository** that tackles various web testing challenges from different platforms. Each challenge is organized in its own folder under `tests/e2e/challenges/`, allowing for easy expansion and maintenance.
+This is a **production-ready Playwright BDD testing template** optimized for Cursor IDE's AI assistant. It provides a complete, opinionated setup for writing maintainable end-to-end tests with built-in accessibility and performance auditing.
 
-**Current Challenges: UITestingPlayground & AutomationExercise**
+**What makes this template special:**
 
-The repository now covers:
+- **Cursor-optimized** — Comprehensive `.cursor/rules/` configuration so AI understands your project structure, patterns, and conventions instantly
+- **Zero boilerplate BDD** — Decorators directly on Page Object Model methods eliminate separate step-definition files
+- **Built-in audits** — Axe accessibility and Lighthouse performance checks run automatically in CI
+- **Bun-powered** — 3–5× faster than Node.js for installs and test execution
+- **Production-ready CI/CD** — Parallel sharded tests, HTML reports on GitHub Pages, and comprehensive quality gates
 
-- **UITestingPlayground** — 23 comprehensive scenarios spanning element identification, timing, interaction, and advanced UI puzzles.
-- **AutomationExercise** — Authentication journey (register, login, logout) with resilient flows that auto-generate users, bypass cookie consent walls, and recover from intrusive ad redirects.
+**Included Examples:**
+
+The template includes two complete challenge implementations demonstrating real-world patterns:
+
+- **UITestingPlayground** — 23 scenarios covering element identification, timing, interactions, and advanced UI challenges
+- **AutomationExercise** — 18 e-commerce scenarios including authentication, product browsing, cart management, checkout, and account features
 
 ### Key Features
 

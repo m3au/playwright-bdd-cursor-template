@@ -22,6 +22,7 @@
 - **ci**: add automatic git tagging and release management
 
 ### Fixed
+- **tests**: add COLOR_SCHEME to browser-project test setup
 - **tests**: set required environment variables in unit tests
 
 - **automationexercise**: resolve linting errors in POM pages

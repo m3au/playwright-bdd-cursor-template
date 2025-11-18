@@ -3,10 +3,14 @@
 ## [1.5.6] - 2025-11-05
 
 ### Refactored
+
 - remove cable-guy implementation
 
 - **ci**: rename unit tests to Pre-flight Checks
+
 ### Added
+- rename project and improve README
+
 - **audit**: pin external targets and config
 - **automationexercise**: automate authentication flows
 - add automated coverage badge tooling
@@ -17,6 +21,7 @@
 - **ci**: add automatic git tagging and release management
 
 ### Fixed
+
 - **automationexercise**: resolve linting errors in POM pages
 - **ci**: add Dependabot check to child workflows
 - **ci**: include bun.lock in Dependabot pin-versions commit
@@ -59,7 +64,7 @@
 
 ### Fixed
 
-- **ci**: correct GitHub Pages URL to playwright-pilot
+- **ci**: correct GitHub Pages URL to playwright-bdd-cursor-template
 
 ## [1.5.0] - 2025-11-05
 

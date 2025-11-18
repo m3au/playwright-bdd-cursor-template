@@ -1,20 +1,19 @@
-# 🤖 Playwright Pilot <!-- omit from toc -->
+# 🤖 Playwright BDD Cursor Template <!-- omit from toc -->
 
-**AI-Piloted E2E Testing with Playwright & BDD**
+**Opinionated, Cursor-optimized Playwright BDD testing framework with built-in accessibility & performance auditing**
 
-[![CI](https://github.com/m3au/playwright-pilot/actions/workflows/ci.yml/badge.svg)](https://github.com/m3au/playwright-pilot/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/Coverage-100.00%25-brightgreen)](tests/unit/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-enabled-brightgreen)](https://github.com/features/actions)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24.0.0-brightgreen)](https://nodejs.org/)
-[![Bun](https://img.shields.io/badge/Bun-1.3.1-black)](https://bun.sh/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)](https://www.typescriptlang.org/)
+⚠️ **This is NOT an AI/LLM browser agent or autonomous pilot. It is a battle-tested E2E testing template that works amazingly well with Cursor's Composer/Agent.**
+
+[![CI](https://github.com/m3au/playwright-bdd-cursor-template/actions/workflows/ci.yml/badge.svg)](https://github.com/m3au/playwright-bdd-cursor-template/actions/workflows/ci.yml)
 [![Playwright](https://img.shields.io/badge/Playwright-1.56.1-green)](https://playwright.dev/)
-[![playwright-bdd](https://img.shields.io/badge/playwright--bdd-8.4.1-orange)](https://github.com/vitalets/playwright-bdd)
-[![Gherkin](https://img.shields.io/badge/Gherkin-BDD-green)](https://cucumber.io/docs/gherkin/)
-[![Axe Core](https://img.shields.io/badge/Axe%20Core-4.11.0-blue)](https://github.com/dequelabs/axe-core)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-1.3.1-black)](https://bun.sh/)
+[![BDD](https://img.shields.io/badge/BDD-Gherkin-green)](https://cucumber.io/docs/gherkin/)
+[![Axe Accessibility](https://img.shields.io/badge/Axe%20Accessibility-4.11.0-blue)](https://github.com/dequelabs/axe-core)
 [![Lighthouse](https://img.shields.io/badge/Lighthouse-13.0.1-blue)](https://developer.chrome.com/docs/lighthouse/)
-[![ESLint](https://img.shields.io/badge/ESLint-9.39.0-purple)](https://eslint.org/)
+[![Cursor Ready](https://img.shields.io/badge/Cursor-Ready-brightgreen)](https://cursor.sh/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-enabled-brightgreen)](https://github.com/features/actions)
+[![Coverage](https://img.shields.io/badge/Coverage-100.00%25-brightgreen)](tests/unit/)
 [![TypeScript ESLint](https://img.shields.io/badge/TypeScript%20ESLint-8.46.2-blue)](https://typescript-eslint.io/)
 [![SonarJS](https://img.shields.io/badge/SonarJS-3.0.5-orange)](https://github.com/SonarSource/eslint-plugin-sonarjs)
 [![Unicorn](https://img.shields.io/badge/Unicorn-62.0.0-purple)](https://github.com/sindresorhus/eslint-plugin-unicorn)
@@ -31,20 +30,26 @@
 
 ![Cyberpunk animation showing futuristic cityscape](docs/images/cyberpunk.gif)
 
+> **🎬 Demo Video Coming Soon**: Watch Cursor Composer generate tests, see accessibility checks in action, and explore the GitHub Actions workflow with HTML reports. [Record a 20-30 second demo](https://github.com/m3au/playwright-bdd-cursor-template/issues) and we'll feature it here!
+
 ## Table of Contents <!-- omit from toc -->
 
+- [Why This Template Exists](#why-this-template-exists)
 - [About](#about)
+  - [Key Features](#key-features)
 - [Test Scenarios](#test-scenarios)
   - [UITestingPlayground Challenge](#uitestingplayground-challenge)
-  - [AutomationExercise Challenge](#automationexercise-challenge)
   - [Element Identification (5 scenarios)](#element-identification-5-scenarios)
   - [Timing \& Synchronization (7 scenarios)](#timing--synchronization-7-scenarios)
   - [Interaction Challenges (5 scenarios)](#interaction-challenges-5-scenarios)
   - [Advanced Challenges (6 scenarios)](#advanced-challenges-6-scenarios)
+  - [AutomationExercise Challenge](#automationexercise-challenge)
 - [Test Reports](#test-reports)
 - [Documentation](#documentation)
+  - [Challenge Documentation](#challenge-documentation)
+  - [Project Documentation](#project-documentation)
 - [Project Structure](#project-structure)
-- [Quick Setup](#quick-setup)
+- [Quick Start](#quick-start)
 - [Architecture \& Patterns](#architecture--patterns)
   - [Challenge-Based Organization](#challenge-based-organization)
   - [Page Object Model (POM)](#page-object-model-pom)
@@ -54,6 +59,28 @@
 - [Code Quality](#code-quality)
 
 ---
+
+## Why This Template Exists
+
+Most Playwright + BDD setups are either outdated, require separate step-definition files, or completely ignore accessibility/performance. This template fixes all of that and is specifically tuned for Cursor so AI can write and maintain your tests with almost zero friction.
+
+**The Problem:**
+
+- Traditional BDD setups require maintaining separate step-definition files
+- Most templates ignore accessibility and performance testing
+- AI assistants struggle with outdated or poorly documented patterns
+- Slow test execution due to Node.js runtime overhead
+
+**The Solution:**
+
+- ✅ Zero separate step-definition files (decorators on POM methods)
+- ✅ Built-in axe-core accessibility in every run
+- ✅ Lighthouse performance audit in CI
+- ✅ Bun runtime → 3–5× faster installs & test runs
+- ✅ Cursor.rules + MCP config included (Composer understands your project instantly)
+- ✅ Parallel + sharded GitHub Actions out of the box
+- ✅ Beautiful HTML report published to GitHub Pages
+- ✅ Traces, video, screenshots on failure
 
 ## About
 
@@ -66,21 +93,19 @@ The repository now covers:
 - **UITestingPlayground** — 23 comprehensive scenarios spanning element identification, timing, interaction, and advanced UI puzzles.
 - **AutomationExercise** — Authentication journey (register, login, logout) with resilient flows that auto-generate users, bypass cookie consent walls, and recover from intrusive ad redirects.
 
-The framework includes:
+### Key Features
 
-- **AI-Assisted Development**: Optimized for **Cursor IDE** with custom rules to enforce project conventions
-- **Behavior-Driven Development (BDD)**: Utilizes Gherkin and `playwright-bdd` for clear, collaborative feature development
-- **Decorated Page Object Model (POM)**: Eliminates separate step files by using **TypeScript decorators** (`@Given`, `@When`, `@Then`) directly on POM methods
-- **TypeScript**: Full type safety with strict mode enabled
-- **High-Speed Runtime**: Leverages **Bun** as both package manager and runtime for blazing-fast execution, with horizontal scaling via Playwright workers and vertical scaling through sharding
-- **Accessibility Testing**: Axe-core integration for automated WCAG compliance audits
-- **Performance Testing**: Lighthouse integration for Core Web Vitals and performance audits
-- **Interactive HTML Reports**: Automatically published to a dedicated **GitHub Pages dashboard** (including traces and media)
-- **Code Quality**: ESLint, Prettier, CSpell, Husky hooks, and Conventional Commits enforcement
-- **Environment Configuration**: Multi-environment support (development, staging, production) via .env files
-- **CI/CD**: GitHub Actions workflows with automated test execution and report publishing
-- **Dependabot**: Automated dependency updates with strict version pinning
-- **Local Testing**: Act integration for testing GitHub Actions workflows locally before pushing
+- ✓ **Zero separate step-definition files** — Decorators (`@Given`, `@When`, `@Then`) directly on POM methods
+- ✓ **Built-in axe-core accessibility** — WCAG compliance checks in every test run
+- ✓ **Lighthouse performance audit** — Core Web Vitals and performance metrics in CI
+- ✓ **Bun runtime** — 3–5× faster installs & test runs vs Node.js
+- ✓ **Cursor.rules + MCP config** — Composer understands your project instantly
+- ✓ **Parallel + sharded GitHub Actions** — Optimized CI/CD out of the box
+- ✓ **Beautiful HTML reports** — Published to GitHub Pages with traces, screenshots, videos
+- ✓ **TypeScript with strict mode** — Full type safety throughout
+- ✓ **Comprehensive code quality** — ESLint, Prettier, CSpell, Husky, Conventional Commits
+- ✓ **Multi-environment support** — Development, staging, production via .env files
+- ✓ **Local CI/CD testing** — Act integration for testing workflows before pushing
 
 ---
 
@@ -158,9 +183,9 @@ This challenge implements **18 comprehensive e-commerce test scenarios** coverin
 
 ![Test Reports Dashboard](docs/images/dashboard.png)
 
-Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/playwright-pilot/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
+Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/playwright-bdd-cursor-template/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
 
-View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-pilot/actions), we're running **41 E2E test scenarios** (23 UITestingPlayground + 18 AutomationExercise) using 2 shards (WORKERS=100% per shard).
+View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-bdd-cursor-template/actions), we're running **41 E2E test scenarios** (23 UITestingPlayground + 18 AutomationExercise) using 2 shards (WORKERS=100% per shard).
 
 ---
 
@@ -189,7 +214,7 @@ Comprehensive documentation covering architecture, development workflows, code q
 A high-level view of the project's directory structure:
 
 ```text
-playwright-pilot/
+playwright-bdd-cursor-template/
 ├── .cursor/                          # Cursor IDE configuration
 │   ├── mcp.json                      # MCP servers (Playwright, GitHub)
 │   ├── hooks/                        # Example hook scripts (copy to ~/.cursor/hooks/ to use)
@@ -255,41 +280,39 @@ playwright-pilot/
 
 ---
 
-## Quick Setup
+## Quick Start
 
-**Install:**
+**Get started in under 60 seconds:**
 
-```shell
+```bash
+# Clone and install
+git clone https://github.com/m3au/playwright-bdd-cursor-template.git
+cd playwright-bdd-cursor-template
 bun install
-```
 
-**Configure:**
-
-```shell
-# Copy .env.example to .env and customize the configuration
+# Configure (copy .env.example to .env)
 cp .env.example .env
+
+# Run your first test
+bun run test
 ```
 
-Environment-specific templates ([`.env.production`](.env.production)) are also available for different deployment environments.
+**That's it!** Your tests are running. 🎉
 
-See [Development Guide](./docs/development.md#environment-configuration) for complete environment variable documentation and CI vs local configuration differences.
+**Common Commands:**
 
-**Run:**
-
-```shell
-bun run          # List all available project commands
-bun run test     # Run all E2E projects (includes pretest step)
-bun run test:automationexercise    # Run AutomationExercise challenge only (includes pretest step)
-bun run test:uitestingplayground   # Run UITestingPlayground challenge only (includes pretest step)
-bun test         # Run unit tests with coverage enabled
-bun pretest      # Generate BDD step files from Gherkin features
-bun ui           # Run tests with Playwright UI
-bun headed       # Run E2E tests in visible browser mode
-bun debug        # Run E2E tests with Playwright's interactive debugger
-bun failed       # Run only failed tests from previous run
-bun axe          # Run accessibility tests
-bun lighthouse   # Run Lighthouse performance tests
+```bash
+bun run test                    # Run all E2E tests
+bun run test:automationexercise  # Run specific challenge
+bun run test:uitestingplayground # Run specific challenge
+bun test                        # Run unit tests with coverage
+bun ui                          # Interactive Playwright UI
+bun axe                         # Accessibility audit
+bun lighthouse                  # Performance audit
+bun lint                        # Run all linting checks
 ```
+
+See [Development Guide](./docs/development.md#environment-configuration) for complete environment variable documentation.
 
 **Code Quality:**
 

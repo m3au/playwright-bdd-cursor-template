@@ -49,8 +49,8 @@ This guide provides setup instructions and development guidelines for the projec
 
 ```shell
 # Clone the repository
-git clone https://github.com/m3au/playwright-pilot.git
-cd playwright-pilot
+git clone https://github.com/m3au/playwright-bdd-cursor-template.git
+cd playwright-bdd-cursor-template
 
 # Install dependencies
 bun install

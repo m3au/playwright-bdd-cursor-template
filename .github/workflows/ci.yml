@@ -55,6 +55,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -158,18 +163,18 @@ jobs:
           cat >> $GITHUB_STEP_SUMMARY << 'EOF'
           ## 📊 Test Reports Dashboard
 
-          **Interactive HTML Reports:** [https://m3au.github.io/tech-challenge/](https://m3au.github.io/tech-challenge/)
+          **Interactive HTML Reports:** [https://m3au.github.io/playwright-bdd-cursor-template/](https://m3au.github.io/playwright-bdd-cursor-template/)
 
           ### Available Reports
 
-          - 🎭 [E2E Test Results](https://m3au.github.io/tech-challenge/playwright-report/)
-          - 🗼 [Lighthouse Performance](https://m3au.github.io/tech-challenge/lighthouse/)
-          - ♿ [Axe Accessibility](https://m3au.github.io/tech-challenge/axe/)
-          - 🧪 [Unit Tests Coverage](https://m3au.github.io/tech-challenge/unit-tests/)
+          - 🎭 [E2E Test Results](https://m3au.github.io/playwright-bdd-cursor-template/playwright-report/)
+          - 🗼 [Lighthouse Performance](https://m3au.github.io/playwright-bdd-cursor-template/lighthouse/)
+          - ♿ [Axe Accessibility](https://m3au.github.io/playwright-bdd-cursor-template/axe/)
+          - 🧪 [Unit Tests Coverage](https://m3au.github.io/playwright-bdd-cursor-template/unit-tests/)
 
           ---
 
           *Reports updated on every push to main*
           EOF
 
-          echo "::notice title=Test Reports Dashboard::View interactive reports at https://m3au.github.io/tech-challenge/"
+          echo "::notice title=Test Reports Dashboard::View interactive reports at https://m3au.github.io/playwright-bdd-cursor-template/"

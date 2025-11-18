@@ -1,6 +1,6 @@
 {
-  "name": "playwright-pilot",
-  "version": "1.12.1",
+  "name": "playwright-bdd-cursor-template",
+  "version": "1.13.0",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.1",
@@ -108,10 +108,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/m3au/playwright-pilot.git"
+    "url": "https://github.com/m3au/playwright-bdd-cursor-template.git"
   },
-  "homepage": "https://m3au.github.io/playwright-pilot/",
+  "homepage": "https://m3au.github.io/playwright-bdd-cursor-template/",
   "bugs": {
-    "url": "https://github.com/m3au/playwright-pilot/issues"
+    "url": "https://github.com/m3au/playwright-bdd-cursor-template/issues"
   }
 }

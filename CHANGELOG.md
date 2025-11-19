@@ -22,6 +22,7 @@
 - **ci**: add automatic git tagging and release management
 
 ### Fixed
+- **ci**: add missing env setup in preflight workflow
 - **tests**: add COLOR_SCHEME to browser-project test setup
 - **tests**: set required environment variables in unit tests
 

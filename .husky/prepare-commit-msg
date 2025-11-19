@@ -1,6 +1,4 @@
 #!/usr/bin/env sh
-# shellcheck disable=SC1091
-. "$(dirname -- "$0")/_/husky.sh"
 
 # Read commit message from file ($1)
 commit_msg=$(cat "$1")

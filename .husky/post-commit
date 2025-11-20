@@ -1,6 +1,5 @@
-#!/usr/bin/env sh
+# shellcheck shell=sh
 # shellcheck disable=SC1091
-. "$(dirname -- "$0")/_/husky.sh"
 
 # Check if package.json or CHANGELOG.md are staged (modified by prepare-commit-msg but not yet committed)
 if git diff --cached --name-only | grep -qE '^(package\.json|CHANGELOG\.md)$'; then

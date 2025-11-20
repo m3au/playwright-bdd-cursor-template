@@ -32,7 +32,7 @@
         "eslint-import-resolver-typescript": "4.4.4",
         "eslint-plugin-import": "2.32.0",
         "eslint-plugin-no-secrets": "2.2.1",
-        "eslint-plugin-perfectionist": "^4.15.1",
+        "eslint-plugin-perfectionist": "4.15.1",
         "eslint-plugin-playwright": "2.3.0",
         "eslint-plugin-promise": "7.2.1",
         "eslint-plugin-regexp": "2.10.0",
@@ -46,6 +46,7 @@
         "lint-staged": "16.2.6",
         "npm-check-updates": "19.1.2",
         "playwright-bdd": "8.4.1",
+        "prettier": "^3.6.2",
         "shellcheck": "4.1.0",
         "ts-node": "10.9.2",
         "tsx": "4.20.6",
@@ -1363,6 +1364,8 @@
     "postgres-interval": ["postgres-interval@1.2.0", "", { "dependencies": { "xtend": "^4.0.0" } }, "sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ=="],
 
     "prelude-ls": ["prelude-ls@1.2.1", "", {}, "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="],
+
+    "prettier": ["prettier@3.6.2", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ=="],
 
     "process-nextick-args": ["process-nextick-args@2.0.1", "", {}, "sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag=="],
 

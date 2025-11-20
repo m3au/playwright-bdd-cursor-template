@@ -1,21 +1,45 @@
 # Changelog
 
 ## [✨ Feature detected: 1.14.2 -> 1.15.0
+
 1.15.0] - 2025-11-20
+
 ### Added
+
 - **ci**: add new report template files
+
 ## [♻️ Refactor detected: 1.15.0 -> 1.15.1
+
 1.15.1] - 2025-11-20
+
 ### Refactored
+
 - **tests**: update test files and utilities
+
 ## [♻️ Refactor detected: 1.15.1 -> 1.15.2
+
 1.15.2] - 2025-11-20
+
 ### Refactored
+
 - **poms**: update page object models
+
 ## [🐛 Fix detected: 1.15.2 -> 1.15.3
+
 1.15.3] - 2025-11-20
+
 ### Fixed
+
 - **ci**: prevent workflows from skipping on regular PRs
+
+## [🐛 Fix detected: 1.15.3 -> 1.15.4
+
+1.15.4] - 2025-11-20
+
+### Fixed
+
+- **deps**: add missing prettier dependency
+
 ## [1.14.2] - 2025-11-19
 
 ### Fixed

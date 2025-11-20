@@ -336,8 +336,8 @@ Required in `.env`:
 
 ```bash
 BASE_URL_UITESTINGPLAYGROUND=http://uitestingplayground.com
-TIMEOUT=30000
-EXPECT_TIMEOUT=10000
+TIMEOUT=40000
+EXPECT_TIMEOUT=15000
 ```
 
 ### Test Isolation

@@ -355,8 +355,8 @@ Required in `.env`:
 
 ```bash
 BASE_URL_AUTOMATIONEXERCISE=https://automationexercise.com
-TIMEOUT=30000
-EXPECT_TIMEOUT=10000
+TIMEOUT=40000
+EXPECT_TIMEOUT=15000
 ```
 
 ### User Data Structure

@@ -83,7 +83,7 @@ See [Environment Configuration](#environment-configuration) for detailed variabl
 
 Unit tests use Bun's built-in test runner and achieve 100% code coverage for utility functions (`tests/utils/`) and scripts (`scripts/`). Tests are located in `tests/unit/` and `bunfig.toml` is configured with `root = "tests/unit"` so `bun test` only runs unit tests. Coverage is enabled by default, with `tests/utils/decorators.ts` excluded from coverage due to Bun's tooling limitations with decorators.
 
-Unit tests cover all utility modules (attachments, browser-project, bug-reporter, decorators, environment, format, locators, network, pagination, random) and all scripts (bump-version, changelog, lint, pin-versions).
+Unit tests cover all utility modules (attachments, browser-project, bug-reporter, decorators, environment, format, locators, network, pagination, random) and all scripts (bump-version, changelog, lint, pin-versions, update-coverage-badge).
 
 - Unit tests run automatically before every commit (pre-commit hook)
 - Pre-flight checks (lint + unit tests) run first in CI/CD before other tests (E2E, Lighthouse, Axe)
@@ -170,7 +170,7 @@ bun lint:shellcheck   # ShellCheck only (Husky git hooks)
 
 ### Pre-commit Hooks
 
-Husky Git hooks enforce code quality and commit message standards. They run unit tests and `lint-staged` (ESLint, Prettier, ShellCheck on staged files) on `pre-commit` and TypeScript type checking on `pre-push`.
+Husky Git hooks enforce code quality and commit message standards. They run unit tests, update the coverage badge, and run `lint-staged` (ESLint, Prettier, ShellCheck on staged files) on `pre-commit` and TypeScript type checking on `pre-push`.
 
 For detailed configuration, see [Code Quality Files Reference](./code-quality.md#pre-commit-hooks).
 

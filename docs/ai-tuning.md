@@ -48,15 +48,27 @@ chmod +x ~/.cursor/hooks/*.sh
 
 These hooks provide an additional layer of safety by validating and potentially blocking AI-generated commands before they execute.
 
-### [`block-dangerous-commands.sh`](../.cursor/hooks/block-dangerous-commands.sh)
+### Available Hooks
 
-Example hook script that **blocks destructive system commands** (file deletion, disk formatting, permission changes) by intercepting and validating AI-generated commands before execution.
+**Configuration:** See [`.cursor/hooks/README.md`](../.cursor/hooks/README.md) for hook configuration. Copy hooks to `~/.cursor/hooks/` and update `~/.cursor/hooks.json` to activate them.
 
-### [`format-files.sh`](../.cursor/hooks/format-files.sh)
+#### [`block-dangerous-commands.sh`](../.cursor/hooks/block-dangerous-commands.sh)
 
-_Processes files before AI operations._
+Blocks destructive system commands (file deletion, disk formatting, permission changes) by intercepting and validating AI-generated commands before execution.
 
-Example hook script that processes files before they are handled by AI assistants. Formats markdown files (`.md`, `.mdx`) with markdownlint and prettier, and formats code files (`.js`, `.jsx`, `.ts`, `.tsx`, `.json`, `.css`, `.scss`, `.html`, `.yaml`, `.yml`) with prettier. Can be extended to perform other preprocessing tasks.
+**Blocks:** `rm -rf ~/`, `rm -rf /`, `> file`, `mkfs.*`, `dd if=... of=/dev/...`, `chmod -R 777 /`, fork bombs, unsafe pipe execution, etc.
+
+#### [`validate-paths.sh`](../.cursor/hooks/validate-paths.sh)
+
+Validates paths in commands to prefer project-relative paths over absolute. Warns about absolute paths outside project directory, dangerous variable expansions, and special characters that could expand dangerously.
+
+#### [`transform-commands.sh`](../.cursor/hooks/transform-commands.sh)
+
+Suggests built-in Cursor tools instead of terminal commands. Transforms `ls` → `list_dir`, `cat` → `read_file`, `rm -rf` → `delete_file`, `> file` → `write`/`search_replace`.
+
+#### [`format-files.sh`](../.cursor/hooks/format-files.sh)
+
+Formats files before AI operations. Formats markdown files (`.md`, `.mdx`) with markdownlint and prettier, and formats code files (`.js`, `.jsx`, `.ts`, `.tsx`, `.json`, `.css`, `.scss`, `.html`, `.yaml`, `.yml`) with prettier.
 
 ---
 
@@ -86,7 +98,6 @@ These rules guide the AI assistant's behavior based on the file context. Rule fi
 | **[`core.mdc`](../.cursor/rules/core.mdc)**                 | Core safety principles, communication style (direct, concise), and reasoning requirements. |
 | **[`comments.mdc`](../.cursor/rules/comments.mdc)**         | Comment best practices (explaining WHY, not WHAT) and ESLint disable standards.            |
 | **[`dependencies.mdc`](../.cursor/rules/dependencies.mdc)** | Dependency version pinning standards (requires exact `x.y.z` versions).                    |
-| **[`cspell.mdc`](../.cursor/rules/cspell.mdc)**             | CSpell spell checking standards and dictionary usage.                                      |
 | **[`commits.mdc`](../.cursor/rules/commits.mdc)**           | Conventional Commits standards for message formatting and semantic versioning.             |
 
 ### Context-Specific Rules
@@ -94,8 +105,9 @@ These rules guide the AI assistant's behavior based on the file context. Rule fi
 | Rule File                                                     | Applies To                     | Focus                                                                                         |
 | :------------------------------------------------------------ | :----------------------------- | :-------------------------------------------------------------------------------------------- |
 | **[`typescript.mdc`](../.cursor/rules/typescript.mdc)**       | `**/*.ts`, `**/*.tsx`          | Strict TypeScript standards (no `any`, explicit return types, ES modules).                    |
-| **[`playwright.mdc`](../.cursor/rules/playwright.mdc)**       | Playwright test files          | Best practices: `getByRole()`, avoid redundant waits, prefer `expect()`.                      |
-| **[`pom.mdc`](../.cursor/rules/pom.mdc)**                     | Page Object Models             | POM structure, decorator usage (`@Fixture`, `@Given`), and internal helper methods (`@Step`). |
+| **[`security.mdc`](../.cursor/rules/security.mdc)**           | `**/*.ts`, `**/*.tsx`          | Security standards and OWASP Top 10 compliance (secrets management, input validation, secure coding). |
+| **[`playwright.mdc`](../.cursor/rules/playwright.mdc)**       | `tests/**/*.ts`, `playwright.config.ts` | Best practices: `getByRole()`, avoid redundant waits, prefer `expect()`.                      |
+| **[`pom.mdc`](../.cursor/rules/pom.mdc)**                     | `tests/e2e/challenges/*/poms/**/*.ts` | POM structure, decorator usage (`@Fixture`, `@Given`), and internal helper methods (`@Step`). |
 | **[`feature.mdc`](../.cursor/rules/feature.mdc)**             | Gherkin feature files          | BDD standards: Given/When/Then structure, user story format, clear steps.                     |
 | **[`documentation.mdc`](../.cursor/rules/documentation.mdc)** | Doc files (`md`, `mdx`, `mdc`) | Content quality: direct, factual, accessible, and honest tone.                                |
 | **[`markdown.mdc`](../.cursor/rules/markdown.mdc)**           | Markdown files                 | Formatting syntax: tables, code blocks, links, and horizontal rules.                          |

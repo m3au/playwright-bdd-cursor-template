@@ -37,6 +37,9 @@ make test-dryrun
 # Test the primary E2E tests workflow (test.yml)
 make test
 
+# Test the preflight checks workflow (preflight.yml)
+make preflight
+
 # Run the performance audit (lighthouse.yml)
 make lighthouse
 

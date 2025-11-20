@@ -1,6 +1,6 @@
 # Architecture Documentation <!-- omit from toc -->
 
-This document describes the architecture and design decisions for the Playwright Pilot test automation project.
+This document describes the architecture and design decisions for the Playwright BDD Cursor Template test automation project.
 
 ![Placeholder](https://placecats.com/millie_neo/400/200)
 
@@ -8,14 +8,26 @@ This document describes the architecture and design decisions for the Playwright
 
 - [System Architecture](#system-architecture)
 - [Test Execution Flow](#test-execution-flow)
+- [Challenge-Based Organization](#challenge-based-organization)
+  - [Challenge Structure](#challenge-structure)
+  - [Challenge Isolation Pattern](#challenge-isolation-pattern)
+  - [Base World Architecture](#base-world-architecture)
 - [Component Architecture](#component-architecture)
   - [Page Object Models](#page-object-models)
   - [Fixture System](#fixture-system)
+  - [POM Registration Pattern](#pom-registration-pattern)
   - [Component Interaction](#component-interaction)
+- [Code Organization](#code-organization)
+  - [Path Aliases System](#path-aliases-system)
+  - [Test Utilities Architecture](#test-utilities-architecture)
 - [Step Definition Pattern](#step-definition-pattern)
   - [Traditional Approach vs Decorator Approach](#traditional-approach-vs-decorator-approach)
   - [Decorator Mapping](#decorator-mapping)
   - [Step Definition Flow](#step-definition-flow)
+- [Bug Reporting Architecture](#bug-reporting-architecture)
+- [Project Configuration](#project-configuration)
+  - [Playwright Project Configuration](#playwright-project-configuration)
+  - [Audit Tests Architecture](#audit-tests-architecture)
 - [Deployment \& Quality Architecture](#deployment--quality-architecture)
   - [CI/CD Workflow Architecture](#cicd-workflow-architecture)
 
@@ -77,6 +89,84 @@ sequenceDiagram
 
 The test execution follows a **fully automated flow** where a single command (`bun test`) triggers code generation, browser automation, and reporting. The `bddgen` pretest hook eliminates manual code generation steps, ensuring Gherkin feature files are always synchronized with executable test code before each test run.
 
+## Challenge-Based Organization
+
+Each challenge is completely isolated in its own directory under `tests/e2e/challenges/`, enabling independent test suites with separate configurations and fixtures.
+
+### Challenge Structure
+
+```text
+tests/e2e/challenges/
+├── uitestingplayground/
+│   ├── features/           # Gherkin feature files
+│   ├── poms/               # Challenge-specific POMs
+│   │   ├── pages/          # Page POMs
+│   │   └── components/     # Component POMs
+│   └── world.ts            # Challenge-specific fixtures
+└── automationexercise/
+    ├── features/
+    ├── poms/
+    ├── utils/              # Challenge-specific utilities
+    └── world.ts
+```
+
+### Challenge Isolation Pattern
+
+Each challenge extends the base `tests/e2e/world.ts` with challenge-specific fixtures:
+
+```typescript
+// tests/e2e/challenges/uitestingplayground/world.ts
+import { test as baseTest } from '../../world';
+
+export const test = baseTest.extend<{
+  HomePage: unknown;
+  DynamicIdPage: unknown;
+  // ... other challenge POMs
+}>({
+  HomePage: async ({ page }, use) => {
+    const { HomePage } = await import('./poms/pages/home-page');
+    await use(new HomePage(page));
+  },
+  // ... other fixture registrations
+});
+```
+
+This pattern ensures:
+
+- **Complete isolation**: Challenges don't interfere with each other
+- **Independent configuration**: Each challenge can have its own base URL, retries, and settings
+- **Clear boundaries**: Easy to add or remove challenges without affecting others
+- **Parallel execution**: Challenges can run in parallel as separate Playwright projects
+
+### Base World Architecture
+
+The base `tests/e2e/world.ts` provides core functionality shared by all challenges:
+
+- Extends `playwright-bdd` test with world fixture
+- Exports decorators, types, and utilities via `@world` path alias
+- Handles bug reporting on test failures
+- Provides environment configuration access
+
+**World Fixture**: Provides `world` object containing:
+
+- **`world.page`**: Playwright page instance
+- **`world.data`**: Processed environment configuration object (via `getEnvironment()` function exported from `world.ts`)
+- **`world.testContext`**: Test context object for tracking test steps and state (used for bug reporting)
+- **`world.testInfo`**: Playwright TestInfo instance for test metadata and attachments
+
+**Environment Variables**: All configuration is read from `.env` files loaded via `dotenv`:
+
+- **Local development**: Uses `.env` (copied from `.env.example`)
+- **CI/CD**: Uses `.env.production` with overrides from workflow env vars
+- **Error handling**: All Playwright configs throw errors if `.env` is missing
+- **No defaults**: All values must be provided in `.env` files (no hardcoded defaults in code)
+
+Variables from `process.env` are consumed by:
+
+- Playwright config (test configuration like `TIMEOUT`, `WORKERS`, challenge-specific `BASE_URL_<CHALLENGE>`)
+- Fixtures (via `getEnvironment()` function in `world.ts` which processes `process.env` into structured config)
+- POMs (for challenge-specific base URL access via `environment(\`BASE*URL*${challengeName.toUpperCase()}\`)!`exported from`@world`)
+
 ## Component Architecture
 
 The test framework uses a layered architecture combining Page Object Models (POMs), Playwright fixtures, and BDD decorators for dependency injection and step definition mapping.
@@ -122,30 +212,6 @@ graph LR
 
 The fixture system centralizes dependency management and ensures consistent test isolation across all test runs.
 
-**World Fixture**: Provides `world` object containing:
-
-- **`world.page`**: Playwright page instance
-- **`world.data`**: Processed environment configuration object (via `getEnvironment()` function exported from `world.ts`)
-- **`world.testContext`**: Test context object for tracking test steps and state (used for bug reporting)
-- **`world.testInfo`**: Playwright TestInfo instance for test metadata and attachments
-
-The fixture calls `getEnvironment()` (defined and exported in `world.ts`) which reads from `process.env` and returns a structured configuration object.
-
-**Environment Variables**: All configuration is read from `.env` files loaded via `dotenv`:
-
-- **Local development**: Uses `.env` (copied from `.env.example`)
-- **CI/CD**: Uses `.env.production` with overrides from workflow env vars
-- **Error handling**: All Playwright configs throw errors if `.env` is missing
-- **No defaults**: All values must be provided in `.env` files (no hardcoded defaults in code)
-
-Variables from `process.env` are consumed by:
-
-- Playwright config (test configuration like `TIMEOUT`, `WORKERS`, challenge-specific `BASE_URL_<CHALLENGE>`)
-- Fixtures (via `getEnvironment()` function in `world.ts` which processes `process.env` into structured config)
-- POMs (for challenge-specific base URL access via `environment(\`BASE*URL*${challengeName.toUpperCase()}\`)!`exported from`@world`)
-
-**Note**: Audit test suites (`axe.spec.ts`, `lighthouse.spec.ts`) run as separate projects in the unified `playwright.config.ts`, but are not part of the core BDD test architecture.
-
 **Page Fixtures**: Instantiates and injects POM instances into step definitions via dependency injection.
 
 Playwright fixtures provide structured dependency injection:
@@ -155,6 +221,52 @@ Playwright fixtures provide structured dependency injection:
 - Centralizes environment configuration loading
 - Provides type safety via TypeScript interfaces
 
+### POM Registration Pattern
+
+POMs are registered as fixtures in challenge-specific `world.ts` files, enabling dependency injection into step definitions.
+
+**Registration Flow**:
+
+```mermaid
+graph LR
+    A[POM Class] -->|@Fixture decorator| B[Class Definition]
+    B -->|Manually register in world.ts| C[Fixture Registration]
+    C -->|Playwright-bdd resolves| D[Step Definition Injection]
+    D -->|Test execution| E[POM Instance Available]
+```
+
+**Example Registration**:
+
+```typescript
+// tests/e2e/challenges/uitestingplayground/world.ts
+export const test = baseTest.extend<{
+  HomePage: unknown;
+  DynamicIdPage: unknown;
+}>({
+  // Each POM is manually registered as a fixture
+  HomePage: async ({ page }, use) => {
+    const { HomePage } = await import('./poms/pages/home-page');
+    const pom = new HomePage(page);
+    await use(pom);
+  },
+
+  DynamicIdPage: async ({ page }, use) => {
+    const { DynamicIdPage } = await import('./poms/pages/dynamic-id-page');
+    const pom = new DynamicIdPage(page);
+    await use(pom);
+  },
+});
+```
+
+**Key Points**:
+
+- **Manual registration**: Each POM must be registered in the challenge's `world.ts`
+- **Fresh instances**: Each test gets a new POM instance (test isolation)
+- **Lazy loading**: POMs are imported only when needed (better performance)
+- **Type safety**: TypeScript ensures fixture names match POM class names
+
+**Note**: The `@Fixture` decorator on POM classes is for documentation and future tooling - actual fixture registration happens manually in `world.ts` files.
+
 ### Component Interaction
 
 1. **BDD generates test files** from Gherkin feature files
@@ -162,6 +274,134 @@ Playwright fixtures provide structured dependency injection:
 3. **Step definitions** receive POM instances via fixture parameters
 4. **POM methods** (decorated with `@Given`/`@When`/`@Then`) implement step logic
 5. **POMs interact** with Playwright's Page API to control the browser
+
+## Code Organization
+
+Code organization patterns and utilities that support the test framework architecture.
+
+### Path Aliases System
+
+TypeScript path aliases provide clean, maintainable imports throughout the codebase:
+
+```typescript
+// tsconfig.json paths configuration
+{
+  "@world": ["./tests/e2e/world.ts"],
+  "@components/*": ["./tests/e2e/challenges/uitestingplayground/poms/components/*"],
+  "@pages/*": ["./tests/e2e/challenges/uitestingplayground/poms/pages/*"],
+  "@automationexercise/*": ["./tests/e2e/challenges/automationexercise/*"],
+  "@utils": ["./tests/utils/index.ts"],
+  "@scripts/*": ["./scripts/*"]
+}
+```
+
+**Usage Examples**:
+
+```typescript
+// Import from base world (core exports)
+import { Fixture, Given, Step, expect, environment, type Page } from '@world';
+
+// Import challenge-specific POMs
+import { AlertHandler } from '@components/alert-handler';
+import { HomePage } from '@pages/home-page';
+
+// Import utilities
+import { getRandomIndex, getEnvironment } from '@utils';
+
+// Import challenge-specific utilities
+import { createTestUser } from '@automationexercise/utils/user-data';
+```
+
+**Benefits**:
+
+- **No relative path navigation**: Eliminates `../../../../` imports
+- **Clear intent**: Path aliases indicate where code comes from
+- **Refactoring safety**: Moving files doesn't break imports
+- **Better IDE support**: Improved autocomplete and navigation
+
+### Test Utilities Architecture
+
+The `tests/utils/` directory provides reusable utilities shared across all challenges and tests.
+
+**Utility Modules**:
+
+- **`decorators.ts`**: Custom `@Step` decorator implementation
+- **`environment.ts`**: Environment variable access and configuration processing
+- **`bug-reporter.ts`**: Bug report creation and file management
+- **`attachments.ts`**: File attachment utilities for test reports
+- **`locators.ts`**: Locator helper functions
+- **`network.ts`**: Network request utilities
+- **`pagination.ts`**: Pagination helpers
+- **`random.ts`**: Random data generation utilities
+- **`format.ts`**: Formatting utilities
+- **`browser-project.ts`**: Browser project configuration helpers
+
+**Utility Access Pattern**:
+
+All utilities are exported from `tests/utils/index.ts` and accessible via `@utils`:
+
+```typescript
+import {
+  getEnvironment,
+  environment,
+  Step,
+  attachFileFromStep,
+  getRandomIndex,
+  // ... other utilities
+} from '@utils';
+```
+
+**Key Utilities**:
+
+- **Environment**: `getEnvironment()` processes all env vars into typed config
+- **Bug Reporting**: Automatic tracking and reporting of test failures
+- **Step Tracking**: `@Step` decorator tracks steps for bug reports
+- **Attachments**: File attachment helpers for test reports
+- **Random Data**: Utilities for generating test data
+
+POMs are registered as fixtures in challenge-specific `world.ts` files, enabling dependency injection into step definitions.
+
+**Registration Flow**:
+
+```mermaid
+graph LR
+    A[POM Class] -->|@Fixture decorator| B[Class Definition]
+    B -->|Manually register in world.ts| C[Fixture Registration]
+    C -->|Playwright-bdd resolves| D[Step Definition Injection]
+    D -->|Test execution| E[POM Instance Available]
+```
+
+**Example Registration**:
+
+```typescript
+// tests/e2e/challenges/uitestingplayground/world.ts
+export const test = baseTest.extend<{
+  HomePage: unknown;
+  DynamicIdPage: unknown;
+}>({
+  // Each POM is manually registered as a fixture
+  HomePage: async ({ page }, use) => {
+    const { HomePage } = await import('./poms/pages/home-page');
+    const pom = new HomePage(page);
+    await use(pom);
+  },
+
+  DynamicIdPage: async ({ page }, use) => {
+    const { DynamicIdPage } = await import('./poms/pages/dynamic-id-page');
+    const pom = new DynamicIdPage(page);
+    await use(pom);
+  },
+});
+```
+
+**Key Points**:
+
+- **Manual registration**: Each POM must be registered in the challenge's `world.ts`
+- **Fresh instances**: Each test gets a new POM instance (test isolation)
+- **Lazy loading**: POMs are imported only when needed (better performance)
+- **Type safety**: TypeScript ensures fixture names match POM class names
+
+**Note**: The `@Fixture` decorator on POM classes is for documentation and future tooling - actual fixture registration happens manually in `world.ts` files.
 
 ## Step Definition Pattern
 
@@ -246,6 +486,166 @@ sequenceDiagram
 ```
 
 Decorators bridge the gap between Gherkin's human-readable syntax and executable code, providing compile-time validation and eliminating runtime step resolution overhead.
+
+## Bug Reporting Architecture
+
+Automatic bug reporting captures test failures with context for debugging and issue tracking.
+
+**Bug Report Generation Flow**:
+
+```mermaid
+sequenceDiagram
+    participant Test as Test Execution
+    participant World as World Fixture
+    participant Context as TestContext
+    participant Reporter as Bug Reporter
+    participant File as BUGS.json
+
+    Test->>World: Test executes
+    World->>Context: Track steps via @Step decorator
+    Test->>World: Test fails
+    World->>Reporter: createBugReport(testInfo, testContext)
+    Reporter->>Reporter: Extract steps, error, context
+    Reporter->>File: Append to BUGS.json
+    Reporter->>World: Attach bug-report.json
+```
+
+**Test Context Tracking**:
+
+The `@Step` decorator automatically tracks executed steps:
+
+```typescript
+// @Step decorator tracks steps automatically
+@Step
+private async iSeeTheHomePage(): Promise<void> {
+  // This step is tracked in testContext
+  await expect(this.pageTitleLocator).toBeVisible();
+}
+```
+
+**Bug Report Structure**:
+
+```typescript
+interface BugReport {
+  timestamp: string;
+  cableBeginningType: string; // Test-specific context
+  cableBeginningConnector: string;
+  cableEndType: string;
+  cableEndConnector: string;
+  error: string; // Error message
+  stepsToReproduce: string[]; // Tracked steps
+}
+```
+
+**Automatic Bug Report Creation**:
+
+Bug reports are created automatically in the world fixture cleanup:
+
+```typescript
+// tests/e2e/world.ts
+world: async ({ page, testInfo }, use) => {
+  const testContext = getTestContext(testInfo.testId);
+  const world = { page, data, testContext, testInfo };
+
+  await use(world);
+
+  // Cleanup: Create bug report on failure
+  if (testInfo.error) {
+    const bugReport = createBugReport(testInfo, testContext);
+    await appendBugReport(bugReport); // Write to BUGS.json
+    await attachFileFromStep('bug-report.json', JSON.stringify(bugReport));
+  }
+};
+```
+
+**Bug Report Output**:
+
+- **BUGS.json**: JSON file containing all bug reports (root directory)
+- **Test attachments**: bug-report.json attached to failed tests
+- **Steps tracking**: All `@Step` decorated methods are tracked automatically
+
+## Project Configuration
+
+Configuration and setup for test execution, including Playwright projects and audit tests.
+
+### Playwright Project Configuration
+
+Challenges are configured as separate Playwright projects, enabling independent execution and configuration.
+
+**Project Structure**:
+
+```typescript
+// playwright.config.ts
+projects: [
+  // Each challenge × browser combination = separate project
+  ...challenges.flatMap((challenge) => {
+    const challengeBaseUrl = environment(`BASE_URL_${challenge.toUpperCase()}`)!;
+    const projectRetries = challenge === 'automationexercise' ? baseRetries + 1 : baseRetries;
+
+    return [
+      // Chromium project
+      { name: `${challenge}-chromium`, ... },
+      // Firefox project
+      { name: `${challenge}-firefox`, ... },
+      // WebKit project
+      { name: `${challenge}-webkit`, ... },
+    ];
+  }),
+  // Audit test projects
+  { name: 'lighthouse', ... },
+  { name: 'axe', ... },
+]
+```
+
+**Challenge Project Configuration**:
+
+Each challenge project:
+
+- Has its own `testDir` via `defineBddConfig()` pointing to challenge's `world.ts`
+- Uses challenge-specific `BASE_URL_<CHALLENGE>` environment variable
+- Can have custom retry counts (e.g., AutomationExercise gets extra retry for flakiness)
+- Generates test files to `test-output/bdd-gen/<challenge>/`
+
+**Project Benefits**:
+
+- **Selective execution**: Run specific challenges with `--project=uitestingplayground-chromium`
+- **Independent configuration**: Each challenge can have different settings
+- **Parallel execution**: Projects run in parallel by default
+- **Clear separation**: Challenges don't interfere with each other
+
+### Audit Tests Architecture
+
+Accessibility and performance audit tests run as separate projects outside the BDD framework.
+
+**Audit Test Projects**:
+
+- **`axe` project**: Runs `tests/audit/axe.spec.ts` for accessibility audits
+- **`lighthouse` project**: Runs `tests/audit/lighthouse.spec.ts` for performance audits
+
+**Key Differences from BDD Tests**:
+
+- **No BDD**: Direct Playwright tests (no Gherkin/feature files)
+- **Separate execution**: Run independently via `bun axe` or `bun lighthouse`
+- **No retries**: Audit tests run once (retries: 0)
+- **Different reporting**: Focused on audit metrics, not step-by-step execution
+
+**Audit Test Structure**:
+
+```typescript
+// tests/audit/axe.spec.ts
+import { test, expect } from '@playwright/test';
+import { injectAxe, checkA11y } from 'axe-playwright';
+
+test.describe('Axe Accessibility Audits', () => {
+  test('should have no accessibility violations', async ({ page }) => {
+    await page.goto(targetUrl);
+    await injectAxe(page);
+    await checkA11y(page);
+  });
+});
+```
+
+**Note**: Audit tests are part of the unified `playwright.config.ts` but use a different architectural pattern than BDD tests, running as separate projects with their own configuration.
 
 ## Deployment & Quality Architecture
 

@@ -12,6 +12,10 @@
 1.15.2] - 2025-11-20
 ### Refactored
 - **poms**: update page object models
+## [🐛 Fix detected: 1.15.2 -> 1.15.3
+1.15.3] - 2025-11-20
+### Fixed
+- **ci**: prevent workflows from skipping on regular PRs
 ## [1.14.2] - 2025-11-19
 
 ### Fixed

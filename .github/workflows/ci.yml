@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
   # eslint-disable-next-line yml/no-empty-mapping-value -- GitHub Actions allows empty trigger events
   workflow_dispatch:
 
@@ -23,21 +24,21 @@ jobs:
   test:
     name: E2E Tests
     needs: [preflight]
-    if: github.actor != 'dependabot[bot]'
+    if: github.actor != 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
   lighthouse:
     name: Lighthouse Audit
     needs: [preflight]
-    if: github.actor != 'dependabot[bot]'
+    if: github.actor != 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/lighthouse.yml
     secrets: inherit
 
   axe:
     name: Axe Audit
     needs: [preflight]
-    if: github.actor != 'dependabot[bot]'
+    if: github.actor != 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/axe.yml
     secrets: inherit
 

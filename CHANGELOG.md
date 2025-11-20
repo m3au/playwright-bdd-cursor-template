@@ -1,36 +1,125 @@
 # Changelog
 
-## [1.5.6] - 2025-11-05
+## [✨ Feature detected: 1.14.2 -> 1.15.0
+1.15.0] - 2025-11-20
+### Added
+- **ci**: add new report template files
+## [1.14.2] - 2025-11-19
+
+### Fixed
+
+- **ci**: add missing env setup in preflight workflow
+
+## [1.14.1] - 2025-11-18
+
+### Fixed
+
+- **tests**: add COLOR_SCHEME to browser-project test setup
+
+## [1.14.0] - 2025-11-18
+
+### Added
+
+- **tests**: add AuditTarget interface to environment configuration
+
+## [1.13.1] - 2025-11-18
+
+### Fixed
+
+- **tests**: set required environment variables in unit tests
+
+## [1.13.0] - 2025-11-18
+
+### Added
+
+- rename project and improve README
+
+## [1.12.1] - 2025-11-13
+
+### Fixed
+
+- **automationexercise**: resolve linting errors in POM pages
+
+### Documentation
+
+- capture automationexercise progress and commands
+
+## [1.12.0] - 2025-11-13
+
+### Added
+
+- **audit**: pin external targets and config
+
+## [1.11.0] - 2025-11-13
+
+### Added
+
+- **automationexercise**: automate authentication flows
+
+### Chore
+
+- update config and tooling for new architecture
+
+## [1.10.0] - 2025-11-12
+
+### Added
+
+- add automated coverage badge tooling
+
+### Documentation
+
+- update for challenge-based architecture
+
+## [1.9.0] - 2025-11-12
+
+### Added
+
+- implement challenge-based test architecture
+
+## [1.8.11] - 2025-11-12
 
 ### Refactored
 
 - remove cable-guy implementation
 
+## [1.8.10] - 2025-11-05
+
+### Fixed
+
+- **ci**: add Dependabot check to child workflows
+
+## [1.8.9] - 2025-11-05
+
+### Fixed
+
+- **ci**: include bun.lock in Dependabot pin-versions commit
+
+## [1.8.8] - 2025-11-05
+
+### Fixed
+
+- **ci**: fix Dependabot workflow and remove missing label
+
+## [1.8.7] - 2025-11-05
+
+### Fixed
+
+- **ci**: skip E2E/audit tests on Dependabot PRs
+
+## [1.5.6] - 2025-11-05
+
+### Refactored
+
 - **ci**: rename unit tests to Pre-flight Checks
 
 ### Added
-- **tests**: add AuditTarget interface to environment configuration
-- rename project and improve README
-
-- **audit**: pin external targets and config
-- **automationexercise**: automate authentication flows
-- add automated coverage badge tooling
-- implement challenge-based test architecture
 
 - **ci**: add descriptive annotations for each test workflow
 - **ci**: add clickable report links in job summary
 - **ci**: add automatic git tagging and release management
 
 ### Fixed
-- **ci**: add missing env setup in preflight workflow
-- **tests**: add COLOR_SCHEME to browser-project test setup
-- **tests**: set required environment variables in unit tests
 
-- **automationexercise**: resolve linting errors in POM pages
-- **ci**: add Dependabot check to child workflows
-- **ci**: include bun.lock in Dependabot pin-versions commit
-- **ci**: fix Dependabot workflow and remove missing label
-- **ci**: skip E2E/audit tests on Dependabot PRs
 - **ci**: remove remaining concurrency groups from child workflows
 - **ci**: remove concurrency from child workflows to prevent deadlock
 - **ci**: prevent shard cancellation and stop duplicate runs

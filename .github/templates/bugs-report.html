@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bugs Report - {{CHALLENGE_DESCRIPTION}}</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈‍⬛</text></svg>"
+    />
+    <style>
+      {{SHARED_STYLES}}
+      /* Bugs report specific styles */
+      .file-section {
+        margin-bottom: 3rem;
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .file-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .file-name {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+        color: #e2e8f0;
+      }
+      .file-bugs-count {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        background: rgba(168, 85, 247, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        display: inline-block;
+      }
+      .bug-item {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-left: 4px solid #ef4444;
+      }
+      .bug-header {
+        margin-bottom: 1rem;
+      }
+      .bug-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .bug-title strong {
+        font-size: 1.125rem;
+        color: #e2e8f0;
+      }
+      .bug-timestamp {
+        font-size: 0.875rem;
+        color: #64748b;
+      }
+      .bug-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .bug-error {
+        margin-bottom: 1rem;
+      }
+      .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 6px;
+        padding: 1rem;
+        margin: 0.5rem 0 0 0;
+        color: #fca5a5;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-x: auto;
+      }
+      .bug-steps {
+        margin-bottom: 1rem;
+      }
+      .steps-list {
+        margin: 0.5rem 0 0 0;
+        padding-left: 1.5rem;
+        color: #cbd5e1;
+      }
+      .steps-list li {
+        margin-bottom: 0.5rem;
+      }
+      .bug-config {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
+      .config-item {
+        background: rgba(30, 41, 59, 0.7);
+        padding: 0.75rem;
+        border-radius: 6px;
+      }
+      .config-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-bottom: 0.25rem;
+      }
+      .config-value {
+        display: block;
+        color: #e2e8f0;
+        font-weight: 500;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+      }
+      .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+      .back-link {
+        display: inline-block;
+        margin-top: 2rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🐛 Bugs Report - {{CHALLENGE_DESCRIPTION}}</h1>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value">{{TOTAL_BUGS}}</div>
+            <div class="stat-label">Total Bugs</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">{{AFFECTED_FILES}}</div>
+            <div class="stat-label">Affected Files</div>
+          </div>
+        </div>
+      </header>
+      {{CONTENT}}
+      <a href="./index.html" class="back-link">← Back to Challenge Reports</a>
+    </div>
+  </body>
+</html>

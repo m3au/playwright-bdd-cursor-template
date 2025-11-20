@@ -1,4 +1,3 @@
-import { Fixture, Given, When, Then, Step, expect, type Page, type Locator } from '@world';
 import { CookieConsentModal } from '@automationexercise/poms/components/cookie-consent';
 import { registerAutomationExerciseUser } from '@automationexercise/utils/api-client';
 import {
@@ -7,6 +6,7 @@ import {
   type AutomationExerciseUser,
 } from '@automationexercise/utils/user-data';
 import { getTestContext, setTestContext } from '@utils';
+import { Fixture, Given, When, Then, Step, expect, type Page, type Locator } from '@world';
 
 @Fixture('SignupLoginPage')
 export class SignupLoginPage {

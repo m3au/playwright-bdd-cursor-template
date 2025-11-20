@@ -1,6 +1,6 @@
-import { Fixture, Given, When, Then, expect, environment, type Page, type Locator } from '@world';
 import { CookieConsentModal } from '@automationexercise/poms/components/cookie-consent';
 import { getTestContext } from '@utils';
+import { Fixture, Given, When, Then, expect, environment, type Page, type Locator } from '@world';
 
 @Fixture('ContactPage')
 export class ContactPage {

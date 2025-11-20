@@ -1,3 +1,11 @@
+import { CookieConsentModal } from '@automationexercise/poms/components/cookie-consent';
+import { SignupLoginPage } from '@automationexercise/poms/pages/signup-login-page';
+import { registerAutomationExerciseUser } from '@automationexercise/utils/api-client';
+import {
+  generateAutomationExerciseUser,
+  type AutomationExerciseUser,
+} from '@automationexercise/utils/user-data';
+import { getTestContext, setTestContext } from '@utils';
 import {
   Fixture,
   Given,
@@ -9,15 +17,6 @@ import {
   type Page,
   type Locator,
 } from '@world';
-import { CookieConsentModal } from '@automationexercise/poms/components/cookie-consent';
-import { registerAutomationExerciseUser } from '@automationexercise/utils/api-client';
-import {
-  generateAutomationExerciseUser,
-  type AutomationExerciseUser,
-} from '@automationexercise/utils/user-data';
-import { getTestContext, setTestContext } from '@utils';
-
-import { SignupLoginPage } from '@automationexercise/poms/pages/signup-login-page';
 
 type AutomationExerciseState = {
   user: AutomationExerciseUser;

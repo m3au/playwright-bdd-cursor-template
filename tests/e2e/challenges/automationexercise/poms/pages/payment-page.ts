@@ -1,3 +1,4 @@
+import { CookieConsentModal } from '@automationexercise/poms/components/cookie-consent';
 import {
   Fixture,
   Given,
@@ -9,7 +10,6 @@ import {
   type Page,
   type Locator,
 } from '@world';
-import { CookieConsentModal } from '@automationexercise/poms/components/cookie-consent';
 
 @Fixture('PaymentPage')
 export class PaymentPage {

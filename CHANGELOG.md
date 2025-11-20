@@ -8,6 +8,10 @@
 1.15.1] - 2025-11-20
 ### Refactored
 - **tests**: update test files and utilities
+## [♻️ Refactor detected: 1.15.1 -> 1.15.2
+1.15.2] - 2025-11-20
+### Refactored
+- **poms**: update page object models
 ## [1.14.2] - 2025-11-19
 
 ### Fixed

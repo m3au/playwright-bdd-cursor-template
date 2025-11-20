@@ -1,6 +1,6 @@
-import { Fixture, Then, When, Step, expect, type Page, type Locator } from '@world';
 import { AlertHandler } from '@components/alert-handler';
 import { BasePage } from '@components/base-page';
+import { Fixture, Then, When, Step, expect, type Page, type Locator } from '@world';
 
 @Fixture('ClassAttributePage')
 export class ClassAttributePage extends BasePage {

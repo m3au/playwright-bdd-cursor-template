@@ -1,5 +1,5 @@
-import { Fixture, Given, Then, expect, environment, type Page, type Locator } from '@world';
 import { CookieConsentModal } from '@automationexercise/poms/components/cookie-consent';
+import { Fixture, Given, Then, expect, environment, type Page, type Locator } from '@world';
 
 @Fixture('OrderConfirmationPage')
 export class OrderConfirmationPage {

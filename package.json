@@ -1,6 +1,6 @@
 {
   "name": "playwright-bdd-cursor-template",
-  "version": "1.15.1",
+  "version": "1.15.2",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.1",

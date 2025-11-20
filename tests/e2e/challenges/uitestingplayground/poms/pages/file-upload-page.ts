@@ -1,6 +1,7 @@
-import { Fixture, Then, When, Step, expect, type Page, type Locator } from '@world';
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
+
+import { Fixture, Then, When, Step, expect, type Page, type Locator } from '@world';
 
 @Fixture('FileUploadPage')
 export class FileUploadPage {

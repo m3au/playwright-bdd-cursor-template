@@ -1,6 +1,6 @@
-import { Fixture, Then, When, Step, expect, type Page, type Locator } from '@world';
-import { SuccessLabel } from '@components/success-label';
 import { BasePage } from '@components/base-page';
+import { SuccessLabel } from '@components/success-label';
+import { Fixture, Then, When, Step, expect, type Page, type Locator } from '@world';
 
 @Fixture('ClientSideDelayPage')
 export class ClientSideDelayPage extends BasePage {

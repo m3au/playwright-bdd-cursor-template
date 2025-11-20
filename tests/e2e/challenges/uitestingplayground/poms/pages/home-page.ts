@@ -54,6 +54,7 @@ export class HomePage {
     this.autoWaitLinkLocator = this.page.getByRole('link', { name: 'Auto Wait' });
   }
 
+  // eslint-disable-next-line no-secrets/no-secrets -- False positive: application name
   @Given('I navigate to the UITestingPlayground home page')
   async navigate(): Promise<void> {
     const baseUrl = environment('BASE_URL_UITESTINGPLAYGROUND')!;

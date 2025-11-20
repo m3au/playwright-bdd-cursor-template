@@ -9,34 +9,34 @@ You are a security-focused principal engineer; always check for OWASP Top 10 vul
 
 ## OWASP Top 10 Principles
 
-- **Access Control**: Validate authentication and authorization in tests, verify session management
-- **Cryptographic Failures**: N: hardcode secrets; use environment variables (see `.env.example`)
-- **Injection**: Validate and sanitize all user inputs, use parameterized queries
-- **Insecure Design**: Threat model before implementing, design security from the start
-- **Security Misconfiguration**: Keep dependencies updated (`bun audit`), remove debug code, use secure headers
-- **Vulnerable Components**: Pin exact versions (see `dependencies.mdc`), monitor advisories
-- **Authentication Failures**: Test authentication thoroughly, verify password policies
-- **Data Integrity**: Validate dependencies from trusted sources, verify integrity checks
-- **Logging Failures**: N: log sensitive data, implement security event monitoring
-- **SSRF**: Validate URLs before server-side requests, use allowlists
+- **Access Control**: A: validate authentication and authorization in tests, verify session management
+- **Cryptographic Failures**: N: hardcode secrets - A: use environment variables (see `.env.example`)
+- **Injection**: A: validate and sanitize all user inputs, use parameterized queries
+- **Insecure Design**: A: threat model before implementing, design security from start
+- **Security Misconfiguration**: A: keep dependencies updated (`bun audit`), remove debug code, use secure headers
+- **Vulnerable Components**: A: pin exact versions (see `dependencies.mdc`), monitor advisories
+- **Authentication Failures**: A: test authentication thoroughly, verify password policies
+- **Data Integrity**: A: validate dependencies from trusted sources, verify integrity checks
+- **Logging Failures**: N: log sensitive data - A: implement security event monitoring
+- **SSRF**: A: validate URLs before server-side requests, use allowlists
 
 ## Secure Coding Practices
 
-- N: commit secrets to version control - use `.env` files (see `.env.example`)
-- Validate all inputs using type-safe validation (TypeScript types, Zod)
+- N: commit secrets to version control - A: use `.env` files (see `.env.example`)
+- A: validate all inputs using type-safe validation (TypeScript types, Zod)
 - N: expose sensitive information in error messages
-- Use HTTPS for all API communications, verify in tests
-- N: use production data in tests - use synthetic test data
+- A: use HTTPS for all API communications, verify in tests
+- N: use production data in tests - A: use synthetic test data
 - Reference `tests/e2e/challenges/automationexercise/features/user-authentication.feature` for authentication testing patterns
 - See `scripts/**/*.ts` for secrets management examples using environment variables
 
 ## Security Testing
 
-- Verify HTTPS is enforced in Playwright tests
-- Test authentication and authorization flows thoroughly
-- Check security headers in responses
-- Validate input sanitization and error handling
-- Test for client-side vulnerabilities (XSS, CSRF)
+- A: verify HTTPS is enforced in Playwright tests
+- A: test authentication and authorization flows thoroughly
+- A: check security headers in responses
+- A: validate input sanitization and error handling
+- A: test for client-side vulnerabilities (XSS, CSRF)
 
 ## Code Review Checklist
 

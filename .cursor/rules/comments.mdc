@@ -30,3 +30,4 @@ description: 'Comment best practices - when and how to write comments'
 - A: explain non-obvious code with comments
 - N: commit commented-out code
 - A: prefer self-documenting code over comments
+- N: add comments that only restate what the code does (unneeded/useless comments)

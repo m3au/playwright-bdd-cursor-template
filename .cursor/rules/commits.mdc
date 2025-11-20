@@ -13,16 +13,7 @@ Use lowercase, kebab-case: `playwright`, `page-objects`, `config`, `docs`, `test
 
 ## Examples
 
-See git history for real examples. Common patterns:
-
-```text
-feat: add cable selection page object
-feat(playwright): implement random product selection
-fix(tests): resolve timeout in basket validation
-
-- Increase timeout for notification popup
-- Add explicit wait for basket update
-```
+See git history for real examples. Common patterns: `feat:`, `feat(scope):`, `fix(scope):` with body explaining non-obvious changes.
 
 ## Commit Types and Gitmojis
 

@@ -8,15 +8,15 @@ description: 'TypeScript standards and best practices'
 ## Type Safety
 
 - N: use `any` or `unknown` without type guards
-- Use generics for reusable code
-- Define interfaces for object shapes
-- Use explicit return types for functions
+- A: use generics for reusable code
+- A: define interfaces for object shapes
+- A: use explicit return types for functions
 - See `tsconfig.json` for strict mode configuration
 
 ## Import/Export Patterns
 
-- Use ES modules (`import`/`export`) only
-- Use type imports: `import type` for type-only imports
+- A: use ES modules (`import`/`export`) only
+- A: use type imports: `import type` for type-only imports
 - See existing files for import patterns
 
 ## Decorator Support
@@ -32,17 +32,17 @@ description: 'TypeScript standards and best practices'
 
 ## Best Practices
 
-- Use strict mode and proper async/await typing
-- Use discriminated unions for type narrowing
-- Handle errors with proper types
-- Prefer const assertions over type assertions when possible
+- A: use strict mode and proper async/await typing
+- A: use discriminated unions for type narrowing
+- A: handle errors with proper types
+- A: prefer const assertions over type assertions when possible
 - See `eslint.config.mjs` for TypeScript ESLint rules
 
 ## Code Style
 
 ### Conditional Statements
 
-- Use one-liners for simple if statements with a single statement
-- Prefer ternary operators over if-else with early returns when both branches execute
-- Use early returns for error handling and validation checks
-- Keep ternary operators readable - avoid deeply nested ternaries
+- A: use one-liners for simple if statements with single statement
+- A: prefer ternary operators over if-else with early returns when both branches execute
+- A: use early returns for error handling and validation checks
+- A: keep ternary operators readable - N: deeply nested ternaries

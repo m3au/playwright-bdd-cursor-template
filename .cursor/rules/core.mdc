@@ -1,7 +1,7 @@
 ---
 globs: ['**/*']
 alwaysApply: true
-description: Core principles and safety standards
+description: 'Core principles and safety standards'
 ---
 
 # Core

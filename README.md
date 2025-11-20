@@ -13,7 +13,7 @@
 [![Lighthouse](https://img.shields.io/badge/Lighthouse-13.0.1-blue)](https://developer.chrome.com/docs/lighthouse/)
 [![Cursor Ready](https://img.shields.io/badge/Cursor-Ready-brightgreen)](https://cursor.sh/)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-enabled-brightgreen)](https://github.com/features/actions)
-[![Coverage](https://img.shields.io/badge/Coverage-100.00%25-brightgreen)](tests/unit/)
+[![Coverage](https://img.shields.io/badge/Coverage-87.01%25-green)](tests/unit/)
 [![TypeScript ESLint](https://img.shields.io/badge/TypeScript%20ESLint-8.46.2-blue)](https://typescript-eslint.io/)
 [![SonarJS](https://img.shields.io/badge/SonarJS-3.0.5-orange)](https://github.com/SonarSource/eslint-plugin-sonarjs)
 [![Unicorn](https://img.shields.io/badge/Unicorn-62.0.0-purple)](https://github.com/sindresorhus/eslint-plugin-unicorn)
@@ -193,7 +193,7 @@ This challenge implements **18 comprehensive e-commerce test scenarios** coverin
 
 Check 👉🏼 [GitHub Pages HTML Report](https://m3au.github.io/playwright-bdd-cursor-template/) for the _**Interactive HTML reports**_ generated automatically from Playwright test runs, including test results, traces, screenshots, and accessibility/performance audit reports.
 
-View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-bdd-cursor-template/actions), we're running **41 E2E test scenarios** (23 UITestingPlayground + 18 AutomationExercise) using 2 shards (WORKERS=100% per shard).
+View workflow runs 👉🏼 [GitHub Actions](https://github.com/m3au/playwright-bdd-cursor-template/actions), we're running **41 E2E test scenarios** (23 UITestingPlayground + 18 AutomationExercise) using 2 shards (WORKERS=50% per shard).
 
 ---
 
@@ -255,18 +255,20 @@ playwright-bdd-cursor-template/
 │   ├── unit/                         # Unit tests (100% coverage)
 │   └── audit/                        # Audit tests (axe, lighthouse)
 ├── **scripts/**                      # Utility scripts
-│   ├── bump-version.mjs              # Automatic version bumping
-│   ├── pin-versions.mjs              # Dependency version pinning
-│   ├── changelog.mjs                 # Changelog generation
-│   └── lint.mjs                      # Unified linting: TypeScript → ESLint → ShellCheck
+│   ├── bump-version.ts               # Automatic version bumping
+│   ├── changelog.ts                  # Changelog generation
+│   ├── generate-challenge-summary.ts # Challenge summary generation
+│   ├── lint.ts                       # Unified linting: TypeScript → ESLint → ShellCheck
+│   ├── pin-versions.ts               # Dependency version pinning
+│   └── update-coverage-badge.ts      # Coverage badge update
 ├── docs/                             # Documentation
 ├── Makefile                          # Make targets for local workflow testing
 ├── package.json                      # Dependencies and scripts
 ├── bun.lock                          # Bun lock file (pinned dependency versions)
 ├── bunfig.toml                       # Bun package manager configuration
 ├── playwright.config.ts              # Playwright E2E configuration
-├── eslint.config.mjs                 # ESLint configuration
-├── prettier.config.mjs               # Prettier configuration
+├── eslint.config.ts                   # ESLint configuration
+├── prettier.config.ts                 # Prettier configuration
 ├── tsconfig.json                     # TypeScript configuration
 ├── main.code-workspace               # VS Code workspace configuration
 ├── .cspell.jsonc                     # Spell checker configuration
@@ -278,7 +280,6 @@ playwright-bdd-cursor-template/
 ├── .gitattributes                    # Git attributes (line endings, file types)
 ├── .cursorignore                     # Cursor IDE ignore patterns
 ├── .nvmrc                            # Node version manager version
-├── .npmrc                            # npm configuration
 ├── .env                              # Environment variables (local, gitignored)
 ├── .env.example                      # Environment variables template
 ├── .env.production                   # Production environment variables template
@@ -326,9 +327,9 @@ See [Development Guide](./docs/development.md#environment-configuration) for com
 
 ```shell
 bun lint              # Run all linting: TypeScript → ESLint → ShellCheck
-bun lint:fix          # Fix ESLint errors (TS, MJS, JSON, HTML, Markdown, YAML)
+bun lint:fix          # Fix ESLint errors (TS, JSON, HTML, Markdown, YAML)
 bun lint:typescript   # TypeScript type checking only
-bun lint:eslint       # ESLint only (TS, MJS, JSON, HTML, Markdown, YAML, .mdc)
+bun lint:eslint       # ESLint only (TS, JSON, HTML, Markdown, YAML, .mdc)
 bun lint:markdown     # Markdown linting only
 bun lint:shellcheck   # ShellCheck only (Husky git hooks)
 ```
@@ -421,9 +422,9 @@ This project is configured for AI-assisted development with Cursor IDE. Rules gu
 
 This project uses comprehensive code quality tooling:
 
-- **ESLint** (`eslint.config.mjs`) - Linting with TypeScript, SonarJS, Unicorn, CSpell, Playwright, JSON, HTML, YAML, and Markdown support
+- **ESLint** (`eslint.config.ts`) - Linting with TypeScript, SonarJS, Unicorn, CSpell, Playwright, Import, Promise, Security, Regexp, No-Secrets, Perfectionist, JSON, HTML, YAML, and Markdown support
 - **ShellCheck** - Shell script linting for Husky git hooks
-- **Prettier** (`prettier.config.mjs`) - Code formatting
+- **Prettier** (`prettier.config.ts`) - Code formatting
 - **TypeScript** (`tsconfig.json`) - Type checking with strict mode
 - **CSpell** (`.cspell.jsonc`) - Spell checking (English, German, TypeScript)
 - **EditorConfig** (`.editorconfig`) - Editor configuration for consistent formatting

@@ -6,7 +6,7 @@
 **/coverage/**
 
 # Generated files
-*.lock
+bun.lock
 
 # VS Code workspace files
 **/*.code-workspace

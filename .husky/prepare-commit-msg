@@ -15,12 +15,12 @@ commit_subject=$(echo "$commit_msg" | head -n1)
 if echo "$commit_subject" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+"; then
   # Bump package.json version based on commit type
   # Version is output to stdout, messages to stderr
-  new_version=$(node scripts/bump-version.mjs "$commit_subject" 2>/dev/null)
+  new_version=$(bun scripts/bump-version.ts "$commit_subject" 2>/dev/null)
 
   # Only proceed if version was actually bumped (non-empty and matches pattern)
   if [ -n "$new_version" ] && echo "$new_version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
     # Update changelog
-    node scripts/changelog.mjs "$commit_subject" "$new_version" || true
+    bun scripts/changelog.ts "$commit_subject" "$new_version" || true
 
     # Stage the updated files
     git add package.json

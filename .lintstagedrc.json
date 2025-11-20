@@ -1,6 +1,5 @@
 {
   "*.ts": ["eslint --fix --max-warnings=0", "prettier --write"],
-  "*.mjs": ["eslint --fix --max-warnings=0", "prettier --write"],
   "*.md": ["eslint --fix --max-warnings=0", "prettier --write"],
   "*.{json,jsonc}": ["eslint --fix --max-warnings=0", "prettier --write"],
   "*.yml": ["eslint --fix --max-warnings=0", "prettier --write"],

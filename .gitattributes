@@ -7,6 +7,14 @@
 *.json text
 *.jsonc text
 *.md text
+*.mdc text
+*.feature text
+*.toml text
+*.sh text
+
+# Configuration files
+*.code-workspace text
+Makefile text
 
 # Graphics
 *.png binary

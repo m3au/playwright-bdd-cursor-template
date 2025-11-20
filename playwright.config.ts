@@ -1,8 +1,9 @@
-import { defineConfig, type PlaywrightTestConfig } from '@playwright/test';
-
-import { defineBddConfig } from 'playwright-bdd';
-import dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
+
+import { defineConfig, type PlaywrightTestConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+import { defineBddConfig } from 'playwright-bdd';
+
 import { environment, getBrowserProject } from '@utils';
 
 if (!existsSync('.env')) {
@@ -11,41 +12,19 @@ if (!existsSync('.env')) {
 
 dotenv.config({ debug: false, quiet: true });
 
-function createChallengeProject(
-  challengeName: string,
-  browserName: 'chromium' | 'firefox' | 'webkit',
-  deviceName: 'Desktop Chrome' | 'Desktop Firefox' | 'Desktop Safari',
-): PlaywrightTestConfig {
-  const browserProject = getBrowserProject(browserName, deviceName);
-  const challengeBaseUrl = environment(`BASE_URL_${challengeName.toUpperCase()}`)!;
-  return {
-    name: `${challengeName}-${browserName}`,
-    testDir: defineBddConfig({
-      features: `tests/e2e/challenges/${challengeName}/**/*.feature`,
-      steps: `tests/e2e/challenges/${challengeName}/**/*.ts`,
-      outputDir: `test-output/bdd-gen/${challengeName}`,
-      importTestFrom: `tests/e2e/challenges/${challengeName}/world.ts`,
-      disableWarnings: { importTestFrom: true },
-    }),
-    testMatch: ['**/*.spec.js'],
-    use: {
-      ...browserProject.use,
-      baseURL: challengeBaseUrl,
-      trace: environment('TRACE')! as NonNullable<PlaywrightTestConfig['use']>['trace'],
-      screenshot: environment('SCREENSHOT')! as NonNullable<
-        PlaywrightTestConfig['use']
-      >['screenshot'],
-      headless: !environment('HEADED'),
-    },
-  };
-}
-
 const challenges = ['uitestingplayground', 'automationexercise'];
+
+const baseRetries = +environment('RETRIES')!;
+const baseUseConfig = {
+  trace: environment('TRACE')! as NonNullable<PlaywrightTestConfig['use']>['trace'],
+  screenshot: environment('SCREENSHOT')! as NonNullable<PlaywrightTestConfig['use']>['screenshot'],
+  headless: !environment('HEADED'),
+} satisfies Partial<PlaywrightTestConfig['use']>;
 
 const config: PlaywrightTestConfig = {
   fullyParallel: !!environment('FULLY_PARALLEL'),
   forbidOnly: !!environment('FORBID_ONLY'),
-  retries: +environment('RETRIES')!,
+  retries: baseRetries,
   repeatEach: +environment('REPEAT_EACH')!,
   maxFailures: +environment('MAX_FAILURES')!,
   workers: (() => {
@@ -58,16 +37,57 @@ const config: PlaywrightTestConfig = {
   outputDir: 'test-output/test-results',
   projects: [
     // Create challenge projects for each browser
-    ...challenges.flatMap(
-      (challenge) =>
-        [
-          !!environment('CHROMIUM') &&
-            createChallengeProject(challenge, 'chromium', 'Desktop Chrome'),
-          !!environment('FIREFOX') &&
-            createChallengeProject(challenge, 'firefox', 'Desktop Firefox'),
-          !!environment('WEBKIT') && createChallengeProject(challenge, 'webkit', 'Desktop Safari'),
-        ].filter(Boolean) as PlaywrightTestConfig[],
-    ),
+    ...challenges.flatMap((challenge) => {
+      const challengeBaseUrl = environment(`BASE_URL_${challenge.toUpperCase()}`)!;
+      // automationexercise tests against external site are more flaky, add extra retry
+      const projectRetries = challenge === 'automationexercise' ? baseRetries + 1 : baseRetries;
+
+      const defaultProjectConfig = {
+        testDir: defineBddConfig({
+          features: `tests/e2e/challenges/${challenge}/**/*.feature`,
+          steps: `tests/e2e/challenges/${challenge}/**/*.ts`,
+          outputDir: `test-output/bdd-gen/${challenge}`,
+          importTestFrom: `tests/e2e/challenges/${challenge}/world.ts`,
+          disableWarnings: { importTestFrom: true },
+        }),
+        testMatch: ['**/*.spec.js'] as const,
+        retries: projectRetries,
+        use: {
+          ...baseUseConfig,
+          baseURL: challengeBaseUrl,
+        },
+      } satisfies Partial<PlaywrightTestConfig>;
+
+      return [
+        !!environment('CHROMIUM') &&
+          ({
+            ...defaultProjectConfig,
+            name: `${challenge}-chromium`,
+            use: {
+              ...getBrowserProject('chromium', 'Desktop Chrome').use,
+              ...defaultProjectConfig.use,
+            },
+          } satisfies PlaywrightTestConfig),
+        !!environment('FIREFOX') &&
+          ({
+            ...defaultProjectConfig,
+            name: `${challenge}-firefox`,
+            use: {
+              ...getBrowserProject('firefox', 'Desktop Firefox').use,
+              ...defaultProjectConfig.use,
+            },
+          } satisfies PlaywrightTestConfig),
+        !!environment('WEBKIT') &&
+          ({
+            ...defaultProjectConfig,
+            name: `${challenge}-webkit`,
+            use: {
+              ...getBrowserProject('webkit', 'Desktop Safari').use,
+              ...defaultProjectConfig.use,
+            },
+          } satisfies PlaywrightTestConfig),
+      ].filter(Boolean) as PlaywrightTestConfig[];
+    }),
     {
       name: 'lighthouse',
       testDir: 'tests/audit',

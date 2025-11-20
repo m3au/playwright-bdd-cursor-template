@@ -10,9 +10,30 @@ echo "✅ Unit tests passed!"
 
 # Update coverage badge in README
 echo "📊 Updating coverage badge..."
-node scripts/update-coverage-badge.mjs
+bun scripts/update-coverage-badge.ts
 if [ -f README.md ]; then
   git add README.md
+fi
+
+# Check dependency pinning
+echo "📌 Checking dependency pinning..."
+if ! sh scripts/check-dependency-pinning.sh; then
+  echo "❌ Dependency pinning check failed. Please fix the errors above."
+  exit 1
+fi
+
+# Check for commented-out code
+echo "💬 Checking for commented-out code..."
+if ! sh scripts/check-commented-code.sh; then
+  echo "❌ Commented-out code check failed. Please fix the errors above."
+  exit 1
+fi
+
+# Check eslint-disable comments
+echo "🔧 Checking eslint-disable comments..."
+if ! sh scripts/check-eslint-disable.sh; then
+  echo "❌ ESLint disable check failed. Please fix the errors above."
+  exit 1
 fi
 
 # Run lint-staged with better error handling

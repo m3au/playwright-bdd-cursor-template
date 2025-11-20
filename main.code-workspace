@@ -11,6 +11,7 @@
     },
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.configPath": "./prettier.config.ts",
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit",
       "source.fixAll.markdownlint": "explicit",
@@ -26,6 +27,14 @@
       "prettier.trailingComma": "none",
     },
     "markdownlint.run": "onSave",
+    "markdownlint.config": {
+      "MD004": { "style": "consistent" }
+    },
+    "[mdc]": {
+      "markdownlint.config": {
+        "MD004": false // Allow mixed list styles (+, -, *) per rules.mdc token optimization guidelines
+      }
+    },
     "cucumberautocomplete.steps": ["tests/e2e/poms/**/*.ts"],
     "cucumberautocomplete.syncfeatures": "tests/e2e/features/**/*.feature",
     "cucumberautocomplete.gherkinDefinitionPart": ["@Given|@When|@Then|@And|@But"],

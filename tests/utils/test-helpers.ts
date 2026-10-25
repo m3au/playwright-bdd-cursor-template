@@ -13,5 +13,3 @@ export function sanitizeTestName(name: string): string {
   const segments = name.toLowerCase().match(/[a-z0-9]+/g);
   return segments?.join('-') ?? 'target';
 }
-
-

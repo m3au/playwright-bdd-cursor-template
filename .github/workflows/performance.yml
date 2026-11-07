@@ -47,16 +47,10 @@ jobs:
           cp .env.production .env
 
       - name: Run performance tests
-        id: performance-run
         run: bun run test:performance
-        continue-on-error: true
-
-      - name: Record performance test outcome
-        if: steps.performance-run.outcome == 'failure'
-        run: echo "::warning title=Performance test expected failure::Performance tests failed as expected due to strict thresholds"
 
       - name: Add performance test summary
-        if: always()
+        if: success()
         run: |
           echo "::notice title=⚡ Performance Tests::Load testing completed"
 

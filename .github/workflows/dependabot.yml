@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   pin-versions:
@@ -37,15 +36,23 @@ jobs:
       - name: Pin dependency versions
         run: bun run pin
 
-      # bun install rewrites bun.lock even when package.json is already exact.
-      # Dependabot pull_request runs use a read-only token, so pushing that
-      # rewrite fails with git exit 128. Commit only when package.json changed.
+      # bun install can rewrite bun.lock when versions are already exact.
+      # A lockfile-only diff is discarded. A package.json change commits both
+      # package.json and bun.lock so the lock matches the pins.
       - name: Commit pinned versions
         id: pin
         run: |
           set -euo pipefail
-          if git diff --quiet -- package.json; then
-            git checkout -- bun.lock
+          mapfile -t changed < <(git diff --name-only -- package.json bun.lock)
+          if [ "${#changed[@]}" -eq 0 ]; then
+            action=$(bun scripts/pin-commit-plan.ts)
+          else
+            action=$(bun scripts/pin-commit-plan.ts "${changed[@]}")
+          fi
+          if [ "$action" = "none" ]; then
+            if [ "${#changed[@]}" -gt 0 ]; then
+              git checkout -- bun.lock
+            fi
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -57,4 +64,4 @@ jobs:
 
       - name: Push pinned versions
         if: steps.pin.outputs.changed == 'true'
-        run: git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+        run: git push origin "$(bun scripts/pin-commit-plan.ts --push-ref "${{ github.event.pull_request.head.ref }}")"

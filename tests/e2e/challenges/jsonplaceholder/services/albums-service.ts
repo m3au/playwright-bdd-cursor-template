@@ -1,7 +1,9 @@
 import type { APIRequestContext } from '@playwright/test';
-import { ResponseVerifier } from '../utils/response-verifier';
-import { setLastResponse } from '../utils/response-tracker';
+
 import { expect, Fixture, Given, Then, When, Step } from '@world';
+
+import { setLastResponse } from '../utils/response-tracker';
+import { ResponseVerifier } from '../utils/response-verifier';
 
 export interface Album {
   id: number;
@@ -17,9 +19,18 @@ export class AlbumsService {
   private readonly albumByIdEndpoint = (id: number) => `/albums/${id}`;
   private readonly albumsByUserEndpoint = (userId: number) => `/users/${userId}/albums`;
 
-  private lastResponse: Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>> | null = null;
-  private lastAlbums: Album[] | null = null;
-  private lastAlbum: Album | null = null;
+  private lastResponse:
+    | Awaited<
+        ReturnType<
+          | APIRequestContext['get']
+          | APIRequestContext['post']
+          | APIRequestContext['put']
+          | APIRequestContext['delete']
+        >
+      >
+    | undefined;
+  private lastAlbums: Album[] | undefined;
+  private lastAlbum: Album | undefined;
 
   @Given('I retrieve all albums')
   async getAllAlbums(): Promise<void> {

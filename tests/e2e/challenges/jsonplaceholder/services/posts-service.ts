@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
+
 import { expect, Fixture, Given, Then, When, Step } from '@world';
 
 import { setLastResponse, getLastResponse } from '../utils/response-tracker';
@@ -18,9 +19,18 @@ export class PostsService {
   private readonly postsEndpoint = '/posts';
   private readonly postByIdEndpoint = (id: number) => `/posts/${id}`;
 
-  private lastResponse: Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>> | null = null;
-  private lastPosts: Post[] | null = null;
-  private lastPost: Post | null = null;
+  private lastResponse:
+    | Awaited<
+        ReturnType<
+          | APIRequestContext['get']
+          | APIRequestContext['post']
+          | APIRequestContext['put']
+          | APIRequestContext['delete']
+        >
+      >
+    | undefined;
+  private lastPosts: Post[] | undefined;
+  private lastPost: Post | undefined;
 
   @Given('I retrieve all posts')
   async getAllPosts(): Promise<void> {
@@ -140,7 +150,6 @@ export class PostsService {
     await this.iVerifyPostsStructure(this.lastPosts);
   }
 
-
   @Step
   private async iVerifyPostsList(posts: Post[]): Promise<void> {
     expect(Array.isArray(posts)).toBeTruthy();
@@ -186,4 +195,3 @@ export class PostsService {
     }
   }
 }
-

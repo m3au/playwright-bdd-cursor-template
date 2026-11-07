@@ -1,18 +1,24 @@
 import type { APIRequestContext } from '@playwright/test';
 
-let lastResponse: Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>> | null = null;
+type ApiResponse = Awaited<
+  ReturnType<
+    | APIRequestContext['get']
+    | APIRequestContext['post']
+    | APIRequestContext['put']
+    | APIRequestContext['delete']
+  >
+>;
 
-export function setLastResponse(
-  response: Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>>,
-): void {
+let lastResponse: ApiResponse | undefined;
+
+export function setLastResponse(response: ApiResponse): void {
   lastResponse = response;
 }
 
-export function getLastResponse(): Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>> | null {
+export function getLastResponse(): ApiResponse | undefined {
   return lastResponse;
 }
 
 export function clearLastResponse(): void {
-  lastResponse = null;
+  lastResponse = undefined;
 }
-

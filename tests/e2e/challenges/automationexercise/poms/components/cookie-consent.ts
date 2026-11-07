@@ -1,6 +1,12 @@
 import { Step, expect, type Locator, type Page } from '@world';
 
-const DISMISS_BUTTON_SELECTORS = [/accept all/i, /^consent$/i, /allow all/i, /confirm choices/i, /consent/i];
+const DISMISS_BUTTON_SELECTORS = [
+  /accept all/i,
+  /^consent$/i,
+  /allow all/i,
+  /confirm choices/i,
+  /consent/i,
+];
 
 export class CookieConsentModal {
   private readonly consentRootLocator: Locator;
@@ -17,56 +23,80 @@ export class CookieConsentModal {
 
   @Step
   async acceptAllIfPresent(): Promise<void> {
-    // Check if page is still open
-    if (this.page.isClosed()) {
+    if (!(await this.waitUntilPageCanShowConsent())) {
       return;
     }
-    
-    // Wait a moment for modal to appear if it's delayed
-    try {
-      await this.page.waitForTimeout(500);
-    } catch (error) {
-      // Page might have closed, return early
-      if (this.page.isClosed()) {
-        return;
-      }
-      throw error;
-    }
-    
+
     if (!(await this.isConsentDisplayed())) {
       return;
     }
 
-    for (const button of this.dismissButtons) {
-      if (this.page.isClosed()) {
-        return;
-      }
-      if (await button.isVisible({ timeout: 2_000 }).catch(() => false)) {
-        // Use force click to bypass overlay if needed
-        try {
-          await button.click({ force: true }).catch(() => button.click());
-          await this.waitForConsentToDisappear();
-          return;
-        } catch (error) {
-          if (this.page.isClosed()) {
-            return;
-          }
-          throw error;
-        }
-      }
+    if (await this.clickFirstDismissButton()) {
+      return;
     }
 
-    // Fallback: try pressing Escape if known buttons are not visible
-    if (!this.page.isClosed()) {
+    await this.dismissWithEscape();
+  }
+
+  private async waitUntilPageCanShowConsent(): Promise<boolean> {
+    if (this.page.isClosed()) {
+      return false;
+    }
+
+    try {
+      await this.overlayLocator
+        .or(this.consentRootLocator)
+        .waitFor({ state: 'visible', timeout: 500 })
+        .catch(() => {});
+    } catch (error) {
+      if (this.page.isClosed()) {
+        return false;
+      }
+      throw error;
+    }
+
+    return !this.page.isClosed();
+  }
+
+  private async clickFirstDismissButton(): Promise<boolean> {
+    for (const button of this.dismissButtons) {
+      if (this.page.isClosed()) {
+        return false;
+      }
+      if (!(await button.isVisible({ timeout: 2000 }).catch(() => false))) {
+        continue;
+      }
+
       try {
-        await this.page.keyboard.press('Escape');
+        // The consent overlay intercepts pointer events, so a normal click never reaches the button.
+        // eslint-disable-next-line playwright/no-force-option -- overlay blocks the button
+        await button.click({ force: true }).catch(() => button.click());
         await this.waitForConsentToDisappear();
+        return true;
       } catch (error) {
         if (this.page.isClosed()) {
-          return;
+          return false;
         }
         throw error;
       }
+    }
+
+    return false;
+  }
+
+  private async dismissWithEscape(): Promise<void> {
+    if (this.page.isClosed()) {
+      return;
+    }
+
+    try {
+      await this.page.keyboard.press('Escape');
+      await this.waitForConsentToDisappear();
+    } catch (error) {
+      if (this.page.isClosed()) {
+        return;
+      }
+      throw error;
     }
   }
 
@@ -81,7 +111,6 @@ export class CookieConsentModal {
       return;
     }
     try {
-      await this.page.waitForTimeout(500);
       await expect(this.overlayLocator).toBeHidden({ timeout: 10_000 });
       await expect(this.consentRootLocator).toBeHidden({ timeout: 10_000 });
     } catch (error) {

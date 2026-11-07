@@ -1,5 +1,6 @@
+// cspell:ignore Segoe
 import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import path from 'node:path';
 
 import type { ArtilleryResults } from './metrics-analyzer';
 import { analyzePerformanceResults } from './metrics-analyzer';
@@ -13,10 +14,10 @@ export function generatePerformanceReport(
   results: ArtilleryResults,
   options: ReportOptions = {},
 ): string {
-  const { outputDir = 'test-output/performance-reports', filename } = options;
+  const { outputDir: outputDirectory = 'test-output/performance-reports', filename } = options;
 
   const analysis = analyzePerformanceResults(results);
-  const timestamp = new Date().toISOString().replace(/:/g, '-');
+  const timestamp = new Date().toISOString().replaceAll(':', '-');
   const reportFilename = filename || `performance-report-${timestamp}.json`;
 
   const report = {
@@ -26,17 +27,17 @@ export function generatePerformanceReport(
     summary: analysis.summary,
   };
 
-  const reportPath = join(outputDir, reportFilename);
+  const reportPath = path.join(outputDirectory, reportFilename);
   writeFileSync(reportPath, JSON.stringify(report, undefined, 2));
 
   return reportPath;
 }
 
 export function generateHTMLReport(results: ArtilleryResults, options: ReportOptions = {}): string {
-  const { outputDir = 'test-output/performance-reports', filename } = options;
+  const { outputDir: outputDirectory = 'test-output/performance-reports', filename } = options;
 
   const analysis = analyzePerformanceResults(results);
-  const timestamp = new Date().toISOString().replace(/:/g, '-');
+  const timestamp = new Date().toISOString().replaceAll(':', '-');
   const reportFilename = filename || `performance-report-${timestamp}.html`;
 
   const html = `
@@ -159,9 +160,8 @@ export function generateHTMLReport(results: ArtilleryResults, options: ReportOpt
 </html>
   `.trim();
 
-  const reportPath = join(outputDir, reportFilename);
+  const reportPath = path.join(outputDirectory, reportFilename);
   writeFileSync(reportPath, html);
 
   return reportPath;
 }
-

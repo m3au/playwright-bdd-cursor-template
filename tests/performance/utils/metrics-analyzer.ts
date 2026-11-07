@@ -41,6 +41,27 @@ export const DEFAULT_PERFORMANCE_THRESHOLDS: PerformanceThresholds = {
   throughput: 10,
 };
 
+function latencyViolations(results: ArtilleryResults, thresholds: PerformanceThresholds): string[] {
+  const limits = thresholds.latency;
+  if (!limits) {
+    return [];
+  }
+
+  const checks = [
+    ['Mean', results.aggregate.latency.mean, limits.mean],
+    ['P50', results.aggregate.latency.p50, limits.p50],
+    ['P95', results.aggregate.latency.p95, limits.p95],
+    ['P99', results.aggregate.latency.p99, limits.p99],
+  ] as const;
+  const violations: string[] = [];
+  for (const [label, actual, limit] of checks) {
+    if (limit && actual > limit) {
+      violations.push(`${label} latency ${actual}ms exceeds threshold ${limit}ms`);
+    }
+  }
+  return violations;
+}
+
 export function validatePerformanceMetrics(
   results: ArtilleryResults,
   thresholds: PerformanceThresholds = DEFAULT_PERFORMANCE_THRESHOLDS,
@@ -48,33 +69,7 @@ export function validatePerformanceMetrics(
   passed: boolean;
   violations: string[];
 } {
-  const violations: string[] = [];
-
-  if (thresholds.latency) {
-    if (thresholds.latency.mean && results.aggregate.latency.mean > thresholds.latency.mean) {
-      violations.push(
-        `Mean latency ${results.aggregate.latency.mean}ms exceeds threshold ${thresholds.latency.mean}ms`,
-      );
-    }
-
-    if (thresholds.latency.p50 && results.aggregate.latency.p50 > thresholds.latency.p50) {
-      violations.push(
-        `P50 latency ${results.aggregate.latency.p50}ms exceeds threshold ${thresholds.latency.p50}ms`,
-      );
-    }
-
-    if (thresholds.latency.p95 && results.aggregate.latency.p95 > thresholds.latency.p95) {
-      violations.push(
-        `P95 latency ${results.aggregate.latency.p95}ms exceeds threshold ${thresholds.latency.p95}ms`,
-      );
-    }
-
-    if (thresholds.latency.p99 && results.aggregate.latency.p99 > thresholds.latency.p99) {
-      violations.push(
-        `P99 latency ${results.aggregate.latency.p99}ms exceeds threshold ${thresholds.latency.p99}ms`,
-      );
-    }
-  }
+  const violations: string[] = latencyViolations(results, thresholds);
 
   if (thresholds.errorRate !== undefined) {
     const totalRequests = results.aggregate.requests.completed + results.aggregate.requests.failed;
@@ -111,8 +106,7 @@ export function analyzePerformanceResults(results: ArtilleryResults): {
   metrics: Record<string, unknown>;
 } {
   const totalRequests = results.aggregate.requests.completed + results.aggregate.requests.failed;
-  const errorRate =
-    totalRequests > 0 ? (results.aggregate.errors / totalRequests) * 100 : 0;
+  const errorRate = totalRequests > 0 ? (results.aggregate.errors / totalRequests) * 100 : 0;
   const throughput =
     results.aggregate.duration > 0
       ? results.aggregate.requests.completed / (results.aggregate.duration / 1000)
@@ -142,4 +136,3 @@ Performance Test Results:
     },
   };
 }
-

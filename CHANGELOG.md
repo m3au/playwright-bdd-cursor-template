@@ -32,6 +32,14 @@
 
 - **e2e**: fix automationexercise tests and reqres API key requirement
 
+## [🐛 Fix detected: 1.16.3 -> 1.16.4
+
+1.16.4] - 2026-11-07
+
+### Fixed
+
+- **test**: clear preflight lint failures and exact Click link
+
 ## [1.15.0] - 2025-11-20
 
 ### Added

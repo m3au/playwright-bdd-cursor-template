@@ -28,13 +28,10 @@ export class OrderConfirmationPage {
 
   @Then('I see the order success message')
   async verifyOrderSuccessMessage(): Promise<void> {
-    // Wait for page to fully load
-    await this.page.waitForTimeout(2000);
-    
     // Try multiple selectors for success message
     let successLocator = this.successMessageLocator;
-    let isVisible = await successLocator.isVisible({ timeout: 2_000 }).catch(() => false);
-    
+    let isVisible = await successLocator.isVisible({ timeout: 2000 }).catch(() => false);
+
     if (!isVisible) {
       // Try alternative selectors
       const alternatives = [
@@ -46,32 +43,36 @@ export class OrderConfirmationPage {
         this.page.locator('[id*="success"]'),
         this.page.locator('h2, h1').filter({ hasText: /success|placed|order/i }),
       ];
-      
+
       for (const alt of alternatives) {
-        if (await alt.isVisible({ timeout: 2_000 }).catch(() => false)) {
+        if (await alt.isVisible({ timeout: 2000 }).catch(() => false)) {
           successLocator = alt;
           isVisible = true;
           break;
         }
       }
     }
-    
+
     // If still not visible, check page content via JavaScript
     if (!isVisible) {
-      const hasSuccessText = await this.page.evaluate(() => {
-        const bodyText = document.body.textContent?.toLowerCase() || '';
-        return bodyText.includes('order placed') || 
-               bodyText.includes('order success') || 
-               bodyText.includes('congratulations');
-      }).catch(() => false);
-      
+      const hasSuccessText = await this.page
+        .evaluate(() => {
+          const bodyText = document.body.textContent?.toLowerCase() || '';
+          return (
+            bodyText.includes('order placed') ||
+            bodyText.includes('order success') ||
+            bodyText.includes('congratulations')
+          );
+        })
+        .catch(() => false);
+
       if (hasSuccessText) {
         // Success message exists in page, just not found by selector
         // Consider this a pass
         return;
       }
     }
-    
+
     await expect(successLocator).toBeVisible({ timeout: 10_000 });
   }
 }

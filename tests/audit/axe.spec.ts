@@ -1,12 +1,14 @@
 import * as fs from 'node:fs';
 import path from 'node:path';
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { getAxeResults, injectAxe } from 'axe-playwright';
 
 import { environment, sanitizeTestName } from '@utils';
 
 import { getSharedStyles, themes } from '../../scripts/template-utils';
+
+import { isChallengeTitle, prefetchAuditDocument } from './measurement';
 
 /* eslint-disable playwright/no-conditional-in-test -- Accessibility audits require guard clauses for optional UI state and assets */
 
@@ -85,9 +87,8 @@ function writeSummary(): void {
   // eslint-disable-next-line no-secrets/no-secrets -- False positive: environment variable name in HTML template
   const descriptionHtml = `
       <p>
-        These reports are generated with intentionally strict thresholds (
-        <code>AXE_MAX_VIOLATIONS=${maxViolations}</code>)
-        so they are expected to fail. CI keeps running to ensure the results are still collected and published.
+        These reports enforce a maximum of <code>AXE_MAX_VIOLATIONS=${maxViolations}</code> violations.
+        A result above that limit fails the audit command.
       </p>`;
 
   const notesHtml = `
@@ -108,10 +109,45 @@ function writeSummary(): void {
   fs.writeFileSync(summaryPath, html);
 }
 
+async function openAuditDocument(page: Page, url: string): Promise<void> {
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  const status = response?.status();
+  const title = await page.title();
+  if (!isChallengeTitle(title) && status !== undefined && status < 400) {
+    return;
+  }
+
+  const prefetched = await prefetchAuditDocument(url);
+  if (prefetched.status !== 200 || isChallengeTitle(prefetched.html)) {
+    throw new Error(
+      `Axe did not reach ${url} (browser status ${String(status)}, title "${title}", prefetch status ${prefetched.status}). Navigation failed before the violation threshold.`,
+    );
+  }
+
+  await page.route(url, async (route) => {
+    if (route.request().resourceType() !== 'document') {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html; charset=utf-8',
+      body: prefetched.html,
+    });
+  });
+  const fulfilled = await page.goto(url, { waitUntil: 'load', timeout: 30_000 });
+  const fulfilledTitle = await page.title();
+  if (isChallengeTitle(fulfilledTitle) || (fulfilled && fulfilled.status() >= 400)) {
+    throw new Error(
+      `Axe document for ${url} is still "${fulfilledTitle}" after prefetch. Navigation failed before the violation threshold.`,
+    );
+  }
+}
+
 for (const target of axeTargets) {
   test(`accessibility audit – ${target.name}`, async ({ page }) => {
-    // eslint-disable-next-line playwright/no-networkidle -- networkidle ensures external assets settle before audit
-    await page.goto(target.url, { waitUntil: 'networkidle' });
+    await openAuditDocument(page, target.url);
+    await expect(page.locator('body')).toBeVisible();
 
     // Attempt to dismiss simple cookie banners if they appear
     const acceptButton = page.getByRole('button', { name: /accept|agree|alright|okay/i });

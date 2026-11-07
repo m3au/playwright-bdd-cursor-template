@@ -133,9 +133,7 @@ export class CartPage {
     const itemsBefore = await this.cartItemsLocator.count().catch(() => 0);
 
     // Click remove button
-    await removeButton.click(
-      (await removeButton.isVisible().catch(() => false)) ? undefined : { force: true },
-    );
+    await removeButton.click();
 
     await expect(this.page).toHaveURL(new RegExp(`${this.baseUrl}/view_cart`, 'i'));
     if (itemsBefore > 0) {

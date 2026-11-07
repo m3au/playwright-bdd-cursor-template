@@ -99,22 +99,11 @@ export class PaymentPage {
     try {
       await this.payButtonLocator.click({ timeout: 10_000 });
     } catch (error) {
-      // If click fails, try force click or JavaScript click
-      if (
-        error instanceof Error &&
-        (error.message.includes('intercepts') || error.message.includes('timeout'))
-      ) {
-        try {
-          // Ads and overlays on the payment page intercept the confirm button.
-          // eslint-disable-next-line playwright/no-force-option -- overlay blocks the pay button
-          await this.payButtonLocator.click({ force: true });
-        } catch {
-          // Last resort: JavaScript click
-          await this.payButtonLocator.evaluate((element) => (element as HTMLElement).click());
-        }
-      } else {
+      if (!(error instanceof Error) || !error.message.includes('intercepts')) {
         throw error;
       }
+      await this.cookieConsentModal.acceptAllIfPresent();
+      await this.payButtonLocator.click({ timeout: 10_000 });
     }
 
     // SHARD-PROOF: Wait for navigation to complete before proceeding

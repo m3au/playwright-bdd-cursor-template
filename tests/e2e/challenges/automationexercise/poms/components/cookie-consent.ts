@@ -68,9 +68,7 @@ export class CookieConsentModal {
       }
 
       try {
-        // The consent overlay intercepts pointer events, so a normal click never reaches the button.
-        // eslint-disable-next-line playwright/no-force-option -- overlay blocks the button
-        await button.click({ force: true }).catch(() => button.click());
+        await button.click();
         await this.waitForConsentToDisappear();
         return true;
       } catch (error) {

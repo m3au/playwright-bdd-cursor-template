@@ -427,9 +427,7 @@ export class AccountPage {
     // Set up download listener before clicking
     const downloadPromise = this.page.waitForEvent('download', { timeout: 30_000 });
 
-    await downloadButton.click(
-      (await downloadButton.isVisible().catch(() => false)) ? undefined : { force: true },
-    );
+    await downloadButton.click();
 
     const download = await downloadPromise;
     const filename = download.suggestedFilename();

@@ -13,7 +13,7 @@
 [![Lighthouse](https://img.shields.io/badge/Lighthouse-13.0.1-blue)](https://developer.chrome.com/docs/lighthouse/)
 [![Cursor Ready](https://img.shields.io/badge/Cursor-Ready-brightgreen)](https://cursor.sh/)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-enabled-brightgreen)](https://github.com/features/actions)
-[![Coverage](https://img.shields.io/badge/Coverage-81.84%25-green)](tests/unit/)
+[![Coverage](https://img.shields.io/badge/Coverage-76.85%25-yellow)](tests/unit/)
 [![TypeScript ESLint](https://img.shields.io/badge/TypeScript%20ESLint-8.46.2-blue)](https://typescript-eslint.io/)
 [![SonarJS](https://img.shields.io/badge/SonarJS-3.0.5-orange)](https://github.com/SonarSource/eslint-plugin-sonarjs)
 [![Unicorn](https://img.shields.io/badge/Unicorn-62.0.0-purple)](https://github.com/sindresorhus/eslint-plugin-unicorn)

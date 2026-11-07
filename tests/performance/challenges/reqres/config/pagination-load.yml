@@ -1,5 +1,5 @@
 config:
-  target: 'https://reqres.in/api'
+  target: 'https://reqres.in'
   phases:
     - duration: 30
       arrivalRate: 2
@@ -24,4 +24,3 @@ scenarios:
     engine: playwright
     flowFunction: 'getUsersPaginatedFlow'
     weight: 100
-

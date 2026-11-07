@@ -1,13 +1,16 @@
 import * as fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 
-import { expect, test } from '@playwright/test';
+import { chromium, expect, test } from '@playwright/test';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 
 import { environment, sanitizeTestName, waitForPort } from '@utils';
 
 import { getSharedStyles, themes } from '../../scripts/template-utils';
+
+import { isTargetHttpStatus, prefetchAuditDocument, requireNumericScore } from './measurement';
 
 interface LighthouseTarget {
   name: string;
@@ -69,8 +72,7 @@ function writeSummary(): void {
       <p>
         These runs enforce baseline thresholds (performance ≥ <code>${performanceThreshold}</code>,
         accessibility ≥ <code>${accessibilityThreshold}</code>, best-practices ≥ <code>${bestPracticesThreshold}</code>,
-        SEO ≥ <code>${seoThreshold}</code>). If a regression drops below these targets the step fails,
-        but otherwise the workflow continues and publishes the reports.
+        SEO ≥ <code>${seoThreshold}</code>). A score below a threshold fails the Lighthouse command.
       </p>`;
 
   const notesHtml = `<p class="note">Each link opens the full Lighthouse HTML report for the given target.</p>`;
@@ -83,6 +85,116 @@ function writeSummary(): void {
   html = html.replaceAll('{{NOTES}}', notesHtml);
 
   fs.writeFileSync(summaryPath, html);
+}
+
+type LighthouseRun = Awaited<ReturnType<typeof lighthouse>>;
+
+async function collectLighthouse(
+  url: string,
+  options: Parameters<typeof lighthouse>[1],
+  config: Parameters<typeof lighthouse>[2],
+): Promise<LighthouseRun> {
+  const first = await lighthouse(url, options, config);
+  if (!measurementInvalid(first)) return first;
+  return measureFulfilledDocument(url, config);
+}
+
+function measurementInvalid(result: LighthouseRun): boolean {
+  const performance = result?.lhr?.categories?.['performance']?.score;
+  const status = result?.lhr?.audits?.['http-status-code'];
+  if (typeof performance !== 'number') return true;
+  return !isTargetHttpStatus(status?.score, status?.displayValue);
+}
+
+function numericCategoryScores(
+  result: LighthouseRun,
+  url: string,
+): {
+  performance: number;
+  accessibility: number;
+  bestPractices: number;
+  seo: number;
+} {
+  const scores = result?.lhr?.categories;
+  const statusAudit = result?.lhr?.audits?.['http-status-code'];
+  const runtimeError = result?.lhr?.runtimeError;
+  const diagnostics = `url=${url} http=${String(statusAudit?.displayValue)} runtime=${runtimeError ? JSON.stringify(runtimeError) : 'none'}`;
+  if (!isTargetHttpStatus(statusAudit?.score, statusAudit?.displayValue)) {
+    throw new Error(
+      `Lighthouse did not measure ${url} (HTTP ${String(statusAudit?.displayValue)}). Invalid measurement before any threshold comparison. ${diagnostics}`,
+    );
+  }
+  return {
+    performance: requireNumericScore('performance', scores?.['performance']?.score, diagnostics),
+    accessibility: requireNumericScore(
+      'accessibility',
+      scores?.['accessibility']?.score,
+      diagnostics,
+    ),
+    bestPractices: requireNumericScore(
+      'best-practices',
+      scores?.['best-practices']?.score,
+      diagnostics,
+    ),
+    seo: requireNumericScore('seo', scores?.['seo']?.score, diagnostics),
+  };
+}
+
+async function measureFulfilledDocument(
+  url: string,
+  config: Parameters<typeof lighthouse>[2],
+): Promise<LighthouseRun> {
+  const prefetched = await prefetchAuditDocument(url);
+  if (prefetched.status !== 200) {
+    throw new Error(
+      `Lighthouse could not prefetch ${url} (status ${prefetched.status}). Invalid measurement before any threshold comparison.`,
+    );
+  }
+
+  const port = await new Promise<number>((resolve, reject) => {
+    const listener = net.createServer();
+    listener.listen(0, '127.0.0.1', () => {
+      const address = listener.address();
+      const freePort = typeof address === 'object' && address ? address.port : 0;
+      listener.close(() => resolve(freePort));
+    });
+    listener.on('error', reject);
+  });
+
+  const browser = await chromium.launch({
+    headless: true,
+    args: [`--remote-debugging-port=${port}`, '--remote-allow-origins=*'],
+  });
+  try {
+    const session = await browser.newBrowserCDPSession();
+    await session.send('Fetch.enable', {
+      patterns: [{ urlPattern: `${url}*`, requestStage: 'Request' }],
+    });
+    session.on('Fetch.requestPaused', async (event) => {
+      if (event.resourceType === 'Document' && event.request.url.startsWith(url)) {
+        await session.send('Fetch.fulfillRequest', {
+          requestId: event.requestId,
+          responseCode: 200,
+          responseHeaders: [{ name: 'content-type', value: 'text/html; charset=utf-8' }],
+          body: Buffer.from(prefetched.html).toString('base64'),
+        });
+        return;
+      }
+      await session.send('Fetch.continueRequest', { requestId: event.requestId });
+    });
+    return await lighthouse(
+      url,
+      {
+        logLevel: 'error',
+        output: 'html',
+        onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
+        port,
+      },
+      config,
+    );
+  } finally {
+    await browser.close();
+  }
 }
 
 for (const target of lighthouseTargets) {
@@ -135,7 +247,7 @@ for (const target of lighthouseTargets) {
         port,
       };
 
-      const runnerResult = await lighthouse(target.url, lighthouseOptions, desktopConfig);
+      const runnerResult = await collectLighthouse(target.url, lighthouseOptions, desktopConfig);
 
       const safeName = sanitizeTestName(target.name);
       const targetDirectory = path.join(lighthouseDirectory, safeName);
@@ -156,11 +268,8 @@ for (const target of lighthouseTargets) {
       processedTargets.push({ name: target.name, directory: safeName, url: target.url });
       writeSummary();
 
-      const scores = runnerResult?.lhr?.categories;
-      const performance = scores?.['performance']?.score;
-      const accessibility = scores?.['accessibility']?.score;
-      const bestPractices = scores?.['best-practices']?.score;
-      const seo = scores?.['seo']?.score;
+      const measured = numericCategoryScores(runnerResult, target.url);
+      const { performance, accessibility, bestPractices, seo } = measured;
 
       console.log(`Lighthouse scores for ${target.name}:`, {
         performance,

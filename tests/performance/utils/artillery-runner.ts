@@ -230,6 +230,18 @@ function parseArtilleryOutput(output: string): ArtilleryResults {
   return results;
 }
 
+export function requestsFromArtilleryCounters(counters: Record<string, number>): {
+  completed: number;
+  failed: number;
+  errors: number;
+} {
+  return {
+    completed: Number(counters['vusers.completed'] ?? 0),
+    failed: Number(counters['vusers.failed'] ?? 0),
+    errors: Number(counters['http.errors'] ?? counters['errors'] ?? 0),
+  };
+}
+
 function parseArtilleryJSON(jsonContent: string): ArtilleryResults {
   try {
     const data = JSON.parse(jsonContent);
@@ -241,9 +253,10 @@ function parseArtilleryJSON(jsonContent: string): ArtilleryResults {
     const sessionLength = summaries['vusers.session_length'] || summaries['session_length'] || {};
     const latency = sessionLength || {};
 
-    const vusersCompleted = counters['vusers.completed'] || aggregate['vusers.completed'] || 0;
-    const vusersFailed = counters['vusers.failed'] || aggregate['vusers.failed'] || 0;
-    const httpErrors = counters['http.errors'] || counters['errors'] || 0;
+    const requests = requestsFromArtilleryCounters(counters as Record<string, number>);
+    const vusersCompleted = requests.completed || aggregate['vusers.completed'] || 0;
+    const vusersFailed = requests.failed || aggregate['vusers.failed'] || 0;
+    const httpErrors = requests.errors;
 
     const firstMetricAt = aggregate.firstMetricAt || 0;
     const lastMetricAt = aggregate.lastMetricAt || 0;

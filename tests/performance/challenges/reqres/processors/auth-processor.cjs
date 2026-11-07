@@ -4,7 +4,7 @@ module.exports = {
 };
 
 async function getUsersFlow(page) {
-  const response = await page.request.get('/users');
+  const response = await page.request.get('/api/users');
 
   if (!response.ok()) {
     throw new Error(`Failed to fetch users: ${response.status()}`);
@@ -21,7 +21,7 @@ async function getUsersFlow(page) {
 
 async function getUserByIdFlow(page) {
   const userId = Math.floor(Math.random() * 12) + 1;
-  const response = await page.request.get(`/users/${userId}`);
+  const response = await page.request.get(`/api/users/${userId}`);
 
   if (!response.ok()) {
     throw new Error(`Failed to fetch user ${userId}: ${response.status()}`);

@@ -211,14 +211,11 @@ export class ProductsPage {
     try {
       await addToCartButton.click({ timeout: 5000 });
     } catch (error) {
-      // If click is intercepted, try force click
-      if (error instanceof Error && error.message.includes('intercepts')) {
-        // A cookie or promo overlay can intercept the add-to-cart control.
-        // eslint-disable-next-line playwright/no-force-option -- overlay blocks the button
-        await addToCartButton.click({ force: true });
-      } else {
+      if (!(error instanceof Error) || !error.message.includes('intercepts')) {
         throw error;
       }
+      await this.cookieConsentModal.acceptAllIfPresent();
+      await addToCartButton.click({ timeout: 5000 });
     }
 
     // Wait for success message

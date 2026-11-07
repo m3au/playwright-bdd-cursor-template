@@ -17,8 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -36,23 +37,24 @@ jobs:
       - name: Pin dependency versions
         run: bun run pin
 
-      - name: Check for changes
-        id: check-changes
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-
+      # bun install rewrites bun.lock even when package.json is already exact.
+      # Dependabot pull_request runs use a read-only token, so pushing that
+      # rewrite fails with git exit 128. Commit only when package.json changed.
       - name: Commit pinned versions
-        if: steps.check-changes.outputs.changed == 'true'
+        id: pin
         run: |
+          set -euo pipefail
+          if git diff --quiet -- package.json; then
+            git checkout -- bun.lock
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           git config --local user.name 'github-actions[bot]'
-          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --local user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add package.json bun.lock
           git commit --no-verify -m "chore(deps): pin dependency versions"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Push changes
-        if: steps.check-changes.outputs.changed == 'true'
-        run: git push
+      - name: Push pinned versions
+        if: steps.pin.outputs.changed == 'true'
+        run: git push origin "HEAD:${{ github.event.pull_request.head.ref }}"

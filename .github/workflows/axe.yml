@@ -16,7 +16,10 @@ permissions:
 
 jobs:
   axe:
-    runs-on: ubuntu-latest
+    # ubuntu-latest is Ubuntu 26.04. Playwright before 1.61.0 has no Chromium build for it,
+    # and the open dev-dependencies group only reaches 1.58.2. Stay on 24.04 so browser
+    # coverage still runs without taking that dependency bump.
+    runs-on: ubuntu-24.04
     # Skip only for Dependabot PRs when triggered directly
     # Allow manual dispatch, workflow_call, push, or non-Dependabot PRs
     if: github.actor != 'dependabot[bot]' || github.event_name != 'pull_request'

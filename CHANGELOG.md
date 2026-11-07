@@ -40,6 +40,14 @@
 
 - **test**: clear preflight lint failures and exact Click link
 
+## [🐛 Fix detected: 1.16.4 -> 1.16.5
+
+1.16.5] - 2026-11-07
+
+### Fixed
+
+- **test**: use the ReqRes free-tier key when none is configured
+
 ## [1.15.0] - 2025-11-20
 
 ### Added

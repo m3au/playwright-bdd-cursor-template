@@ -61,23 +61,23 @@ describe('frozen lockfile drift', () => {
   });
 
   test('fails when package.json changes without a lockfile refresh', () => {
-    const tempDir = mkdtempSync(path.join(tmpdir(), 'pin-lock-drift-'));
+    const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'pin-lock-drift-'));
     const packageJsonPath = path.join(workspaceRoot, 'package.json');
-  const lockPath = path.join(workspaceRoot, 'bun.lock');
-    writeFileSync(path.join(tempDir, 'package.json'), readFileSync(packageJsonPath, 'utf8'));
-    writeFileSync(path.join(tempDir, 'bun.lock'), readFileSync(lockPath, 'utf8'));
+    const lockPath = path.join(workspaceRoot, 'bun.lock');
+    writeFileSync(path.join(temporaryDirectory, 'package.json'), readFileSync(packageJsonPath, 'utf8'));
+    writeFileSync(path.join(temporaryDirectory, 'bun.lock'), readFileSync(lockPath, 'utf8'));
 
-    const parsed = JSON.parse(readFileSync(path.join(tempDir, 'package.json'), 'utf8')) as {
+    const parsed = JSON.parse(readFileSync(path.join(temporaryDirectory, 'package.json'), 'utf8')) as {
       devDependencies?: Record<string, string>;
     };
     parsed.devDependencies = {
       ...parsed.devDependencies,
       'totally-fake-package-drift-test': '1.0.0',
     };
-    writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify(parsed, undefined, 2));
+    writeFileSync(path.join(temporaryDirectory, 'package.json'), JSON.stringify(parsed, undefined, 2));
 
     const result = Bun.spawnSync(['bun', 'install', '--frozen-lockfile'], {
-      cwd: tempDir,
+      cwd: temporaryDirectory,
       stdout: 'pipe',
       stderr: 'pipe',
     });

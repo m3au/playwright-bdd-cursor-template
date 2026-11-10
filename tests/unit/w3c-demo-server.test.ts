@@ -25,7 +25,8 @@ describe('w3c demo vendor archive', () => {
       expect(after.status).toBe(200);
       const beforeHtml = await before.text();
       expect(beforeHtml).toContain('Inaccessible Home Page');
-      expect((await after.text()).includes('Accessible Home Page')).toBe(true);
+      const afterHtml = await after.text();
+      expect(afterHtml).toContain('Accessible Home Page');
     } finally {
       await server.stop();
     }

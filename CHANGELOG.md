@@ -16,6 +16,14 @@
 
 - **types**: widen Lighthouse audit map typing
 
+## [🐛 Fix detected: 1.16.9 -> 1.16.10
+
+1.16.10] - 2026-11-10
+
+### Fixed
+
+- **lint**: satisfy sonar and unicorn rules in audit tests
+
 ## [1.16.0] - 2025-11-20
 
 ### Added

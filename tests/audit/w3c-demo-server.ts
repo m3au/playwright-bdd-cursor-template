@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import path from 'node:path';
@@ -43,7 +43,8 @@ export function extractW3cBadDemo(): void {
     return;
   }
   mkdirSync(siteRoot, { recursive: true });
-  execFileSync('unzip', ['-q', zipPath, '-d', siteRoot], { stdio: 'pipe' });
+  const unzipPath = '/usr/bin/unzip';
+  execFileSync(unzipPath, ['-q', zipPath, '-d', siteRoot], { stdio: 'pipe' });
 }
 
 function contentTypeFor(filePath: string): string {

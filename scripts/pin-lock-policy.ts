@@ -14,6 +14,8 @@ export const auditWorkflowFiles = [
   '.github/workflows/performance.yml',
 ] as const;
 
+export const ciWorkflowFile = '.github/workflows/ci.yml';
+
 export function auditRunStepBlocksGate(workflowContents: string, workflowFile: string): boolean {
   const commandByFile: Record<string, string> = {
     '.github/workflows/lighthouse.yml': 'bun run lighthouse',
@@ -39,6 +41,24 @@ export function auditRunStepBlocksGate(workflowContents: string, workflowFile: s
 }
 
 const auditCommands = ['bun run lighthouse', 'bun run axe', 'bun run test:performance'] as const;
+
+export function ciWorkflowMasksAuditJobs(workflowContents: string): boolean {
+  const auditJobs = ['lighthouse:', 'axe:', 'performance:'];
+  for (const jobName of auditJobs) {
+    const jobIndex = workflowContents.indexOf(`  ${jobName}`);
+    if (jobIndex === -1) {
+      continue;
+    }
+    const maskedPatterns = new Set(['continue-on-error: true', '|| true']);
+    const jobBlock = workflowContents.slice(jobIndex, jobIndex + 800);
+    for (const pattern of maskedPatterns) {
+      if (jobBlock.includes(pattern)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 export function auditRunStepsMaskFailures(workflowContents: string): boolean {
   for (const command of auditCommands) {

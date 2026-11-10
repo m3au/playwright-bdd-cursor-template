@@ -6,12 +6,11 @@ on:
   # eslint-disable-next-line yml/no-empty-mapping-value -- GitHub Actions allows empty trigger events
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   pin-versions:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: github.actor == 'dependabot[bot]'
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +57,7 @@ jobs:
           if [ "$action" = "none" ]; then
             if [ "${#changed[@]}" -gt 0 ]; then
               git checkout -- bun.lock
+              bun install --frozen-lockfile
             fi
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0

@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { describe, expect, test } from 'bun:test';
 
@@ -7,6 +8,8 @@ import {
   auditRunStepBlocksGate,
   auditRunStepsMaskFailures,
   auditWorkflowFiles,
+  ciWorkflowFile,
+  ciWorkflowMasksAuditJobs,
   dependabotPinWorkflowSteps,
 } from '../../scripts/pin-lock-policy';
 
@@ -27,6 +30,8 @@ describe('dependabot pin lock policy', () => {
     expect(pinIndex).toBeGreaterThan(-1);
     expect(installIndex).toBeGreaterThan(pinIndex);
     expect(frozenIndex).toBeGreaterThan(installIndex);
+    expect(dependabotWorkflow).toContain('git checkout -- bun.lock');
+    expect(dependabotWorkflow).toContain('permissions:\n      contents: write');
   });
 });
 
@@ -38,19 +43,44 @@ describe('audit workflow gates', () => {
       expect(auditRunStepsMaskFailures(contents)).toBe(false);
     });
   }
+
+  test(`${ciWorkflowFile} does not mask audit jobs with continue-on-error`, () => {
+    const contents = readFileSync(path.join(workspaceRoot, ciWorkflowFile), 'utf8');
+    expect(ciWorkflowMasksAuditJobs(contents)).toBe(false);
+  });
 });
 
 describe('frozen lockfile drift', () => {
-  test('rejects a manifest change when the lockfile is not regenerated', () => {
-    const packageJson = readFileSync(path.join(workspaceRoot, 'package.json'), 'utf8');
-    expect(packageJson).toContain('"name":');
-    const lock = readFileSync(path.join(workspaceRoot, 'bun.lock'), 'utf8');
-    expect(lock.length).toBeGreaterThan(100);
+  test('passes when manifest and lockfile are consistent', () => {
     const result = Bun.spawnSync(['bun', 'install', '--frozen-lockfile'], {
       cwd: workspaceRoot,
       stdout: 'pipe',
       stderr: 'pipe',
     });
     expect(result.exitCode).toBe(0);
+  });
+
+  test('fails when package.json changes without a lockfile refresh', () => {
+    const tempDir = mkdtempSync(path.join(tmpdir(), 'pin-lock-drift-'));
+    const packageJsonPath = path.join(workspaceRoot, 'package.json');
+  const lockPath = path.join(workspaceRoot, 'bun.lock');
+    writeFileSync(path.join(tempDir, 'package.json'), readFileSync(packageJsonPath, 'utf8'));
+    writeFileSync(path.join(tempDir, 'bun.lock'), readFileSync(lockPath, 'utf8'));
+
+    const parsed = JSON.parse(readFileSync(path.join(tempDir, 'package.json'), 'utf8')) as {
+      devDependencies?: Record<string, string>;
+    };
+    parsed.devDependencies = {
+      ...parsed.devDependencies,
+      'totally-fake-package-drift-test': '1.0.0',
+    };
+    writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify(parsed, undefined, 2));
+
+    const result = Bun.spawnSync(['bun', 'install', '--frozen-lockfile'], {
+      cwd: tempDir,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
+    expect(result.exitCode).not.toBe(0);
   });
 });

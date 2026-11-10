@@ -8,6 +8,14 @@
 
 - **test**: validate identity on scored and scanned documents
 
+## [🐛 Fix detected: 1.16.8 -> 1.16.9
+
+1.16.9] - 2026-11-10
+
+### Fixed
+
+- **types**: widen Lighthouse audit map typing
+
 ## [1.16.0] - 2025-11-20
 
 ### Added

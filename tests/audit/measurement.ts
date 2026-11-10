@@ -233,11 +233,10 @@ export interface LighthouseResultLike {
     readonly finalUrl?: string;
     readonly requestedUrl?: string;
     readonly categories?: LighthouseCategories & Record<string, { score?: number | null } | undefined>;
-    readonly audits?: {
-      readonly 'http-status-code'?: LighthouseStatusAudit;
-      readonly 'document-title'?: { readonly displayValue?: string };
-      readonly 'main-document-content'?: { readonly details?: unknown };
-    };
+    readonly audits?: Record<
+      string,
+      { readonly displayValue?: string; readonly details?: unknown; readonly score?: number | null } | undefined
+    >;
     readonly runtimeError?: { code?: string; message?: string };
   } | null;
 }
@@ -294,8 +293,9 @@ export function lighthouseLiveMeasurementBlocked(
   if (typeof performance !== 'number') {
     return `missing performance score for ${url}`;
   }
-  if (!isTargetHttpStatus(status?.score, status?.displayValue)) {
-    return `HTTP ${String(status?.displayValue)} for ${url}`;
+  const httpStatus = status as LighthouseStatusAudit | undefined;
+  if (!isTargetHttpStatus(httpStatus?.score, httpStatus?.displayValue)) {
+    return `HTTP ${String(httpStatus?.displayValue)} for ${url}`;
   }
   const runtimeError = result.lhr?.runtimeError;
   if (runtimeError?.code) {

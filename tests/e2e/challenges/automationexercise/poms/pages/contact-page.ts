@@ -73,24 +73,19 @@ export class ContactPage {
   @When('I click Submit button')
   async clickSubmit(): Promise<void> {
     await expect(this.submitButtonLocator).toBeEnabled();
-    // Set up dialog listener BEFORE clicking to catch the alert immediately
     let dialogMessage = '';
-    const dialogHandler = async (dialog: { message: () => string; accept: () => Promise<void> }) => {
+    this.page.once('dialog', async (dialog) => {
       dialogMessage = dialog.message();
       await dialog.accept();
-    };
-    this.page.once('dialog', dialogHandler);
-    
-    // Click submit - this will trigger the dialog immediately
+    });
     await this.submitButtonLocator.click();
-    
-    // Wait a moment for dialog to be handled
-    await this.page.waitForTimeout(1000);
-    
+
     // Store message for verification step if dialog appeared
     if (dialogMessage) {
-      await this.page.evaluate((msg) => {
-        (window as unknown as { _contactFormDialogMessage?: string })._contactFormDialogMessage = msg;
+      await this.page.evaluate((message) => {
+        (
+          globalThis as unknown as { _contactFormDialogMessage?: string }
+        )._contactFormDialogMessage = message;
       }, dialogMessage);
     }
   }
@@ -102,34 +97,39 @@ export class ContactPage {
     try {
       // Check if dialog message was stored from click step
       const storedMessage = await this.page
-        .evaluate(() => (window as unknown as { _contactFormDialogMessage?: string })._contactFormDialogMessage)
-        .catch(() => undefined);
-      
+        .evaluate(
+          () =>
+            (globalThis as unknown as { _contactFormDialogMessage?: string })
+              ._contactFormDialogMessage,
+        )
+        .catch(() => {});
+
       if (storedMessage && /success/i.test(storedMessage) && !/subscribed/i.test(storedMessage)) {
         // Clear stored message
         await this.page.evaluate(() => {
-          delete (window as unknown as { _contactFormDialogMessage?: string })._contactFormDialogMessage;
+          delete (globalThis as unknown as { _contactFormDialogMessage?: string })
+            ._contactFormDialogMessage;
         });
         return; // Success message verified
       }
-      
+
       // If no stored message or it doesn't match, wait for dialog
       const dialog = await this.page.waitForEvent('dialog', { timeout: 10_000 });
       const message = dialog.message();
-      
+
       if (/success/i.test(message) && !/subscribed/i.test(message)) {
         await dialog.accept();
         return;
       }
-      
+
       await dialog.accept();
-      
+
       // Fallback: check for success message on page
       const successMessage = this.page
         .getByText(/success/i)
         .filter({ hasNotText: /subscribed/i })
         .first();
-      await expect(successMessage).toBeVisible({ timeout: 5_000 });
+      await expect(successMessage).toBeVisible({ timeout: 5000 });
     } catch {
       // No alert appeared, check for success message on page
       const successMessage = this.page

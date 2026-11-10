@@ -4,7 +4,7 @@ module.exports = {
 
 async function getUsersPaginatedFlow(page) {
   const pageNumber = Math.floor(Math.random() * 2) + 1;
-  const response = await page.request.get(`/users?page=${pageNumber}`);
+  const response = await page.request.get(`/api/users?page=${pageNumber}`);
   
   if (!response.ok()) {
     throw new Error(`Failed to fetch users page ${pageNumber}: ${response.status()}`);

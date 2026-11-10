@@ -1,7 +1,9 @@
 import type { APIRequestContext } from '@playwright/test';
-import { ResponseVerifier } from '../utils/response-verifier';
-import { setLastResponse } from '../utils/response-tracker';
+
 import { expect, Fixture, Given, Then, When, Step } from '@world';
+
+import { setLastResponse } from '../utils/response-tracker';
+import { ResponseVerifier } from '../utils/response-verifier';
 
 export interface Photo {
   id: number;
@@ -19,9 +21,18 @@ export class PhotosService {
   private readonly photoByIdEndpoint = (id: number) => `/photos/${id}`;
   private readonly photosByAlbumEndpoint = (albumId: number) => `/albums/${albumId}/photos`;
 
-  private lastResponse: Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>> | null = null;
-  private lastPhotos: Photo[] | null = null;
-  private lastPhoto: Photo | null = null;
+  private lastResponse:
+    | Awaited<
+        ReturnType<
+          | APIRequestContext['get']
+          | APIRequestContext['post']
+          | APIRequestContext['put']
+          | APIRequestContext['delete']
+        >
+      >
+    | undefined;
+  private lastPhotos: Photo[] | undefined;
+  private lastPhoto: Photo | undefined;
 
   @Given('I retrieve all photos')
   async getAllPhotos(): Promise<void> {
@@ -58,7 +69,12 @@ export class PhotosService {
   @When('I create a new photo for album {int} with title {string}')
   async createPhoto(albumId: number, title: string): Promise<void> {
     const response = await this.request.post(this.photosEndpoint, {
-      data: { albumId, title, url: 'https://via.placeholder.com/600/92c952', thumbnailUrl: 'https://via.placeholder.com/150/92c952' },
+      data: {
+        albumId,
+        title,
+        url: 'https://via.placeholder.com/600/92c952',
+        thumbnailUrl: 'https://via.placeholder.com/150/92c952',
+      },
     });
     this.lastResponse = response;
     setLastResponse(response);
@@ -69,7 +85,13 @@ export class PhotosService {
   @When('I update photo {int} with title {string}')
   async updatePhoto(id: number, title: string): Promise<void> {
     const response = await this.request.put(this.photoByIdEndpoint(id), {
-      data: { id, albumId: 1, title, url: 'https://via.placeholder.com/600/92c952', thumbnailUrl: 'https://via.placeholder.com/150/92c952' },
+      data: {
+        id,
+        albumId: 1,
+        title,
+        url: 'https://via.placeholder.com/600/92c952',
+        thumbnailUrl: 'https://via.placeholder.com/150/92c952',
+      },
     });
     this.lastResponse = response;
     setLastResponse(response);

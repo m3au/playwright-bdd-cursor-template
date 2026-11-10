@@ -35,7 +35,8 @@ export class HomePage {
     this.loadDelayLinkLocator = this.page.getByRole('link', { name: 'Load Delay' });
     this.ajaxDataLinkLocator = this.page.getByRole('link', { name: 'AJAX Data' });
     this.clientSideDelayLinkLocator = this.page.getByRole('link', { name: 'Client Side Delay' });
-    this.clickLinkLocator = this.page.getByRole('link', { name: 'Click' });
+    // "Scroll to Click" also contains the word Click, so the name must be exact.
+    this.clickLinkLocator = this.page.getByRole('link', { name: 'Click', exact: true });
     this.textInputLinkLocator = this.page.getByRole('link', { name: 'Text Input' });
     this.scrollbarsLinkLocator = this.page.getByRole('link', { name: 'Scrollbars' });
     this.dynamicTableLinkLocator = this.page.getByRole('link', { name: 'Dynamic Table' });

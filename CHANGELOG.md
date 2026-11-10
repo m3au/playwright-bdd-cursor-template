@@ -1,36 +1,78 @@
 # Changelog
 
-## [✨ Feature detected: 1.15.5 -> 1.16.0
+## [🐛 Fix detected: 1.16.10 -> 1.16.11
 
-1.16.0] - 2025-11-20
+1.16.11] - 2026-11-10
+
+### Fixed
+
+- **test**: fail closed on Lighthouse scored identity and round 3 SHOULDs
+
+## [1.16.10] - 2026-11-10
+
+### Fixed
+
+- **lint**: satisfy sonar and unicorn rules in audit tests
+
+## [1.16.9] - 2026-11-10
+
+### Fixed
+
+- **types**: widen Lighthouse audit map typing
+
+## [1.16.8] - 2026-11-10
+
+### Fixed
+
+- **test**: validate identity on scored and scanned documents
+
+## [1.16.0] - 2025-11-20
 
 ### Added
 
 - integrate performance tests into CI workflow and update documentation
 
-## [🐛 Fix detected: 1.16.0 -> 1.16.1
-
-1.16.1] - 2025-11-20
+## [1.16.1] - 2025-11-20
 
 ### Fixed
 
 - resolve TypeScript type narrowing issues in cart-page.ts
 
-## [🐛 Fix detected: 1.16.1 -> 1.16.2
-
-1.16.2] - 2025-11-20
+## [1.16.2] - 2025-11-20
 
 ### Fixed
 
 - properly narrow TypeScript types in cart-page.ts
 
-## [🐛 Fix detected: 1.16.2 -> 1.16.3
-
-1.16.3] - 2025-11-20
+## [1.16.3] - 2025-11-20
 
 ### Fixed
 
 - **e2e**: fix automationexercise tests and reqres API key requirement
+
+## [1.16.4] - 2026-11-07
+
+### Fixed
+
+- **test**: clear preflight lint failures and exact Click link
+
+## [1.16.5] - 2026-11-07
+
+### Fixed
+
+- **test**: use the ReqRes free-tier key when none is configured
+
+## [1.16.6] - 2026-11-07
+
+### Fixed
+
+- **test**: audit the real documents and count ReqRes Artillery work
+
+## [1.16.7] - 2026-11-10
+
+### Fixed
+
+- **test**: satisfy audit lint and split lighthouse live gate helpers
 
 ## [1.15.0] - 2025-11-20
 

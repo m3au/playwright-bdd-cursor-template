@@ -39,9 +39,10 @@ export const test = bddTest.extend<{
   },
   request: async ({ playwright }, use) => {
     const baseURL = environment('BASE_URL_REQRES')!;
-    // ReqRes.in now requires an API key header (free tier: reqres-free-v1)
-    // Get your free API key at: https://reqres.in/signup
-    const apiKey = environment('REQRES_API_KEY') || 'reqres-free-v1';
+    // ReqRes.in requires x-api-key. environment() throws when a name is unset, so the
+    // published free-tier key is used unless REQRES_API_KEY is already configured.
+    const configuredKey = process.env['REQRES_API_KEY'];
+    const apiKey = configuredKey && configuredKey.length > 0 ? configuredKey : 'reqres-free-v1';
     const requestContext = await playwright.request.newContext({
       baseURL,
       extraHTTPHeaders: {

@@ -87,49 +87,36 @@ export class PaymentPage {
   @When('I click Pay and Confirm Order button')
   async clickPayAndConfirm(): Promise<void> {
     await expect(this.payButtonLocator).toBeEnabled({ timeout: 10_000 });
-    
-    // Wait a bit for page to be fully ready and any ads to load
-    await this.page.waitForTimeout(2000);
-    
+
     // Set up navigation listener before clicking
-    const navigationPromise = this.page.waitForURL(new RegExp(`${this.baseUrl}/payment_done`, 'i'), {
-      timeout: 25_000,
-    });
-    
+    const navigationPromise = this.page.waitForURL(
+      new RegExp(`${this.baseUrl}/payment_done`, 'i'),
+      {
+        timeout: 25_000,
+      },
+    );
+
     try {
       await this.payButtonLocator.click({ timeout: 10_000 });
     } catch (error) {
-      // If click fails, try force click or JavaScript click
-      if (error instanceof Error && (error.message.includes('intercepts') || error.message.includes('timeout'))) {
-        try {
-          await this.payButtonLocator.click({ force: true });
-        } catch {
-          // Last resort: JavaScript click
-          await this.payButtonLocator.evaluate((el) => (el as HTMLElement).click());
-        }
-      } else {
+      if (!(error instanceof Error) || !error.message.includes('intercepts')) {
         throw error;
       }
+      await this.cookieConsentModal.acceptAllIfPresent();
+      await this.payButtonLocator.click({ timeout: 10_000 });
     }
-    
+
     // SHARD-PROOF: Wait for navigation to complete before proceeding
     // This ensures the order confirmation page has fully loaded, preventing race conditions
     // that could cause failures when tests run in parallel or sharded.
     try {
       await navigationPromise;
-    } catch (error) {
-      // If URL doesn't match, check if we're already on confirmation page
-      const currentUrl = this.page.url();
-      if (new RegExp(`${this.baseUrl}/payment_done`, 'i').test(currentUrl)) {
-        // Already on confirmation page
+    } catch {
+      const confirmationUrl = new RegExp(`${this.baseUrl}/payment_done`, 'i');
+      if (confirmationUrl.test(this.page.url())) {
         return;
       }
-      // Wait a bit more and check again
-      await this.page.waitForTimeout(3000);
-      if (new RegExp(`${this.baseUrl}/payment_done`, 'i').test(this.page.url())) {
-        return;
-      }
-      throw error;
+      await expect(this.page).toHaveURL(confirmationUrl, { timeout: 3000 });
     }
   }
 }

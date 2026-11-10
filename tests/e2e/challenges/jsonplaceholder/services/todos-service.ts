@@ -1,7 +1,9 @@
 import type { APIRequestContext } from '@playwright/test';
-import { ResponseVerifier } from '../utils/response-verifier';
-import { setLastResponse } from '../utils/response-tracker';
+
 import { expect, Fixture, Given, Then, When, Step } from '@world';
+
+import { setLastResponse } from '../utils/response-tracker';
+import { ResponseVerifier } from '../utils/response-verifier';
 
 export interface Todo {
   id: number;
@@ -18,9 +20,18 @@ export class TodosService {
   private readonly todoByIdEndpoint = (id: number) => `/todos/${id}`;
   private readonly todosByUserEndpoint = (userId: number) => `/users/${userId}/todos`;
 
-  private lastResponse: Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>> | null = null;
-  private lastTodos: Todo[] | null = null;
-  private lastTodo: Todo | null = null;
+  private lastResponse:
+    | Awaited<
+        ReturnType<
+          | APIRequestContext['get']
+          | APIRequestContext['post']
+          | APIRequestContext['put']
+          | APIRequestContext['delete']
+        >
+      >
+    | undefined;
+  private lastTodos: Todo[] | undefined;
+  private lastTodo: Todo | undefined;
 
   @Given('I retrieve all todos')
   async getAllTodos(): Promise<void> {

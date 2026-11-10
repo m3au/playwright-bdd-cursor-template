@@ -1,12 +1,20 @@
 import * as fs from 'node:fs';
 import path from 'node:path';
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { getAxeResults, injectAxe } from 'axe-playwright';
 
 import { environment, sanitizeTestName } from '@utils';
 
 import { getSharedStyles, themes } from '../../scripts/template-utils';
+
+import {
+  assertProbedLiveTargetDocument,
+  degradedMeasurementBannerHtml,
+  verifyEssentialAssetsWithRequest,
+  writeMeasurementModeMarker,
+} from './measurement';
+import { profileForTargetName } from './target-profiles';
 
 /* eslint-disable playwright/no-conditional-in-test -- Accessibility audits require guard clauses for optional UI state and assets */
 
@@ -85,9 +93,8 @@ function writeSummary(): void {
   // eslint-disable-next-line no-secrets/no-secrets -- False positive: environment variable name in HTML template
   const descriptionHtml = `
       <p>
-        These reports are generated with intentionally strict thresholds (
-        <code>AXE_MAX_VIOLATIONS=${maxViolations}</code>)
-        so they are expected to fail. CI keeps running to ensure the results are still collected and published.
+        These reports enforce a maximum of <code>AXE_MAX_VIOLATIONS=${maxViolations}</code> violations
+        on <strong>live navigation only</strong>. Intercepted or prefetched substitutes cannot satisfy this gate.
       </p>`;
 
   const notesHtml = `
@@ -98,22 +105,58 @@ function writeSummary(): void {
         <strong>Note:</strong> The "w3c-after" demo may show more violations than "w3c-bad" because it tests a more complex page structure with additional elements and features, demonstrating that fixing one set of issues can reveal others or require testing more comprehensive scenarios.
       </p>`;
 
-  // Replace placeholders
   const sharedStyles = getSharedStyles(themes.axe);
+  const degradedBanner = degradedMeasurementBannerHtml(
+    axeDirectory,
+    processedTargets.map((target) => target.directory),
+  );
+
   html = html.replaceAll('{{SHARED_STYLES}}', sharedStyles);
-  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml);
+  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml + degradedBanner);
   html = html.replaceAll('{{LIST_ITEMS}}', listItems);
   html = html.replaceAll('{{NOTES}}', notesHtml);
 
   fs.writeFileSync(summaryPath, html);
 }
 
+async function openLiveAuditDocument(page: Page, url: string, targetName: string): Promise<void> {
+  const profile = profileForTargetName(targetName);
+  const response = await page.goto(url, { waitUntil: 'load', timeout: 60_000 });
+  const status = response?.status() ?? 0;
+  const finalUrl = page.url();
+
+  if (status >= 400) {
+    throw new Error(
+      `Axe live navigation to ${url} failed with HTTP ${String(status)} (final ${finalUrl}).`,
+    );
+  }
+
+  console.log(`Axe live navigation final URL for ${targetName}: ${finalUrl}`);
+
+  if (profile.renderedReadySelector) {
+    await expect(page.locator(profile.renderedReadySelector).first()).toBeVisible({
+      timeout: 60_000,
+    });
+  }
+
+  const title = await page.title();
+  const html = await page.content();
+
+  assertProbedLiveTargetDocument(profile, {
+    finalUrl,
+    status,
+    title,
+    html,
+  });
+
+  await verifyEssentialAssetsWithRequest(page.request, finalUrl, profile);
+}
+
 for (const target of axeTargets) {
   test(`accessibility audit – ${target.name}`, async ({ page }) => {
-    // eslint-disable-next-line playwright/no-networkidle -- networkidle ensures external assets settle before audit
-    await page.goto(target.url, { waitUntil: 'networkidle' });
+    await openLiveAuditDocument(page, target.url, target.name);
+    await expect(page.locator('body')).toBeVisible();
 
-    // Attempt to dismiss simple cookie banners if they appear
     const acceptButton = page.getByRole('button', { name: /accept|agree|alright|okay/i });
     if (await acceptButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await acceptButton.click();
@@ -127,6 +170,12 @@ for (const target of axeTargets) {
     const safeName = sanitizeTestName(target.name);
     const targetDirectory = path.join(axeDirectory, safeName);
     fs.mkdirSync(targetDirectory, { recursive: true });
+
+    writeMeasurementModeMarker(targetDirectory, 'live', {
+      seedUrl: target.url,
+      finalUrl: page.url(),
+      satisfiesLiveGate: true,
+    });
 
     const jsonFileName = `${safeName}-axe-report.json`;
     const jsonReportPath = path.join(targetDirectory, jsonFileName);

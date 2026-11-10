@@ -1,4 +1,6 @@
 import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { defineConfig, type PlaywrightTestConfig } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -14,7 +16,7 @@ dotenv.config({ debug: false, quiet: true });
 
 const challenges = ['uitestingplayground', 'automationexercise', 'jsonplaceholder', 'reqres'];
 
-const apiChallenges = ['jsonplaceholder', 'reqres'];
+const apiChallenges = new Set(['jsonplaceholder', 'reqres']);
 
 const performanceChallenges = ['jsonplaceholder', 'reqres', 'httpbin'];
 
@@ -39,13 +41,14 @@ const config: PlaywrightTestConfig = {
   expect: { timeout: +environment('EXPECT_TIMEOUT')! },
   reporter: [['html', { open: 'never', outputFolder: 'test-output/playwright-report' }], ['line']],
   outputDir: 'test-output/test-results',
+  globalSetup: path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'tests/audit/global-setup.ts'),
   projects: [
     // Create challenge projects for each browser
     ...challenges.flatMap((challenge) => {
       const challengeBaseUrl = environment(`BASE_URL_${challenge.toUpperCase()}`)!;
       const projectRetries = baseRetries;
 
-      if (apiChallenges.includes(challenge)) {
+      if (apiChallenges.has(challenge)) {
         // API challenges use APIRequestContext instead of Page
         // No browser is launched - only baseURL is needed for API requests
         return [
@@ -129,17 +132,20 @@ const config: PlaywrightTestConfig = {
       repeatEach: 0,
     },
     // Performance test projects
-    ...performanceChallenges.map((challenge) => ({
-      name: `${challenge}-performance`,
-      testDir: `tests/performance/challenges/${challenge}`,
-      testMatch: ['**/*.load.spec.ts'],
-      retries: 0,
-      repeatEach: 0,
-      timeout: 600000,
-      use: {
-        baseURL: environment(`BASE_URL_${challenge.toUpperCase()}`)!,
-      },
-    }) satisfies PlaywrightTestConfig),
+    ...performanceChallenges.map(
+      (challenge) =>
+        ({
+          name: `${challenge}-performance`,
+          testDir: `tests/performance/challenges/${challenge}`,
+          testMatch: ['**/*.load.spec.ts'],
+          retries: 0,
+          repeatEach: 0,
+          timeout: 600_000,
+          use: {
+            baseURL: environment(`BASE_URL_${challenge.toUpperCase()}`)!,
+          },
+        }) satisfies PlaywrightTestConfig,
+    ),
   ],
 };
 

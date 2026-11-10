@@ -4,6 +4,7 @@ bun.lock
 
 # Test outputs
 test-output/
+tests/audit/vendor/w3c-bad-demo/site/
 coverage/
 *.log
 

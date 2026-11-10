@@ -1,7 +1,9 @@
 import type { APIRequestContext } from '@playwright/test';
-import { ResponseVerifier } from '../utils/response-verifier';
-import { setLastResponse } from '../utils/response-tracker';
+
 import { expect, Fixture, Given, Then, When, Step } from '@world';
+
+import { setLastResponse } from '../utils/response-tracker';
+import { ResponseVerifier } from '../utils/response-verifier';
 
 export interface Comment {
   id: number;
@@ -19,9 +21,18 @@ export class CommentsService {
   private readonly commentByIdEndpoint = (id: number) => `/comments/${id}`;
   private readonly commentsByPostEndpoint = (postId: number) => `/posts/${postId}/comments`;
 
-  private lastResponse: Awaited<ReturnType<APIRequestContext['get'] | APIRequestContext['post'] | APIRequestContext['put'] | APIRequestContext['delete']>> | null = null;
-  private lastComments: Comment[] | null = null;
-  private lastComment: Comment | null = null;
+  private lastResponse:
+    | Awaited<
+        ReturnType<
+          | APIRequestContext['get']
+          | APIRequestContext['post']
+          | APIRequestContext['put']
+          | APIRequestContext['delete']
+        >
+      >
+    | undefined;
+  private lastComments: Comment[] | undefined;
+  private lastComment: Comment | undefined;
 
   @Given('I retrieve all comments')
   async getAllComments(): Promise<void> {

@@ -79,23 +79,8 @@ export class ProductsPage {
     const urlPattern = new RegExp(`${this.baseUrl}/product_details`, 'i');
 
     // Try multiple strategies to navigate to product details
-    // Strategy 1: Find and click the product link
-    const productLink = this.firstProductLocator.locator('a').first();
-    const isLinkVisible = await productLink.isVisible({ timeout: 2_000 }).catch(() => false);
-
-    if (isLinkVisible) {
-      try {
-        await Promise.all([
-          this.page.waitForURL(urlPattern, {
-            timeout: 15_000,
-            waitUntil: 'domcontentloaded',
-          }),
-          productLink.click({ timeout: 5_000 }),
-        ]);
-        return;
-      } catch {
-        // Continue to next strategy
-      }
+    if (await this.openFirstProductLink(urlPattern)) {
+      return;
     }
 
     // Strategy 2: Get href via JavaScript and navigate directly
@@ -114,22 +99,23 @@ export class ProductsPage {
           );
           if (clickable) {
             const onclick = clickable.getAttribute('onclick');
-            const match = onclick?.match(/product_details[\/\?](\d+)/);
+            const match = onclick?.match(/product_details[/?](\d+)/);
             if (match) {
               return `/product_details/${match[1]}`;
             }
           }
           // Try data attributes
+          const productElement = product instanceof HTMLElement ? product : undefined;
+          const nested = product.querySelector('[data-product-id]');
+          const nestedElement = nested instanceof HTMLElement ? nested : undefined;
           const dataId =
-            product.getAttribute('data-product-id') ||
-            product.querySelector('[data-product-id]')?.getAttribute('data-product-id');
+            productElement?.dataset['productId'] || nestedElement?.dataset['productId'];
           if (dataId) {
             return `/product_details/${dataId}`;
           }
         }
-        return null;
       })
-      .catch(() => null);
+      .catch(() => {});
 
     if (href) {
       const fullUrl = href.startsWith('http') ? href : `${this.baseUrl}${href}`;
@@ -149,7 +135,7 @@ export class ProductsPage {
           timeout: 15_000,
           waitUntil: 'domcontentloaded',
         }),
-        this.firstProductLocator.click({ timeout: 5_000 }),
+        this.firstProductLocator.click({ timeout: 5000 }),
       ]);
       return;
     } catch {
@@ -158,14 +144,14 @@ export class ProductsPage {
 
     // Strategy 4: Try clicking product image
     const productImage = this.firstProductLocator.locator('img').first();
-    if (await productImage.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    if (await productImage.isVisible({ timeout: 2000 }).catch(() => false)) {
       try {
         await Promise.all([
           this.page.waitForURL(urlPattern, {
             timeout: 15_000,
             waitUntil: 'domcontentloaded',
           }),
-          productImage.click({ timeout: 5_000 }),
+          productImage.click({ timeout: 5000 }),
         ]);
         return;
       } catch {
@@ -175,9 +161,9 @@ export class ProductsPage {
 
     // Strategy 5: Try navigating to first product details URL pattern
     // Products are usually numbered, try product_details/1
-    for (let i = 1; i <= 10; i++) {
+    for (let index = 1; index <= 10; index++) {
       try {
-        await this.page.goto(`${this.baseUrl}/product_details/${i}`, {
+        await this.page.goto(`${this.baseUrl}/product_details/${index}`, {
           waitUntil: 'domcontentloaded',
           timeout: 10_000,
         });
@@ -194,32 +180,49 @@ export class ProductsPage {
     );
   }
 
+  private async openFirstProductLink(urlPattern: RegExp): Promise<boolean> {
+    const productLink = this.firstProductLocator.locator('a').first();
+    const isLinkVisible = await productLink.isVisible({ timeout: 2000 }).catch(() => false);
+    if (!isLinkVisible) {
+      return false;
+    }
+
+    try {
+      await Promise.all([
+        this.page.waitForURL(urlPattern, {
+          timeout: 15_000,
+          waitUntil: 'domcontentloaded',
+        }),
+        productLink.click({ timeout: 5000 }),
+      ]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   @When('I add the first product to cart')
   async addFirstProductToCart(): Promise<void> {
     await expect(this.firstProductLocator).toBeVisible({ timeout: 10_000 });
-    
-    // Wait a bit for product to be fully loaded
-    await this.page.waitForTimeout(1000);
-    
+
     const addToCartButton = this.firstProductLocator.locator('.add-to-cart').first();
-    await expect(addToCartButton).toBeVisible({ timeout: 5_000 });
-    
+    await expect(addToCartButton).toBeVisible({ timeout: 5000 });
+
     try {
-      await addToCartButton.click({ timeout: 5_000 });
+      await addToCartButton.click({ timeout: 5000 });
     } catch (error) {
-      // If click is intercepted, try force click
-      if (error instanceof Error && error.message.includes('intercepts')) {
-        await addToCartButton.click({ force: true });
-      } else {
+      if (!(error instanceof Error) || !error.message.includes('intercepts')) {
         throw error;
       }
+      await this.cookieConsentModal.acceptAllIfPresent();
+      await addToCartButton.click({ timeout: 5000 });
     }
-    
+
     // Wait for success message
     const successMessage = this.page.getByText(/added/i).first();
     const isVisible = await successMessage.isVisible({ timeout: 5000 }).catch(() => false);
     if (isVisible) {
-      await expect(successMessage).toBeVisible({ timeout: 5_000 });
+      await expect(successMessage).toBeVisible({ timeout: 5000 });
     }
   }
 

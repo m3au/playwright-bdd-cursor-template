@@ -9,6 +9,16 @@ import { environment, sanitizeTestName, waitForPort } from '@utils';
 
 import { getSharedStyles, themes } from '../../scripts/template-utils';
 
+import { verifyLighthouseScoredDocument, writeDegradedDomDiagnostics } from './lighthouse-live-gate';
+import {
+  degradedMeasurementBannerHtml,
+  isTargetHttpStatus,
+  lighthouseLiveMeasurementBlocked,
+  requireNumericScore,
+  writeMeasurementModeMarker,
+} from './measurement';
+import { lighthouseCategoriesForTarget, profileForTargetName } from './target-profiles';
+
 interface LighthouseTarget {
   name: string;
   url: string;
@@ -20,11 +30,6 @@ const lighthouseTargets: LighthouseTarget[] = [
     name: 'polymer-shop',
     url: environment('BASE_URL_LIGHTHOUSE_POLYMER')!,
     description: 'Polymer Shop Demo – E-commerce performance testing site',
-  },
-  {
-    name: 'w3c-bad',
-    url: environment('BASE_URL_LIGHTHOUSE_W3C_BAD')!,
-    description: 'W3C Before Fix Demo – Demonstrates accessibility issues that need fixing',
   },
 ];
 
@@ -67,28 +72,70 @@ function writeSummary(): void {
 
   const descriptionHtml = `
       <p>
-        These runs enforce baseline thresholds (performance ≥ <code>${performanceThreshold}</code>,
+        These runs enforce baseline thresholds on <strong>live navigation only</strong>
+        (performance ≥ <code>${performanceThreshold}</code>,
         accessibility ≥ <code>${accessibilityThreshold}</code>, best-practices ≥ <code>${bestPracticesThreshold}</code>,
-        SEO ≥ <code>${seoThreshold}</code>). If a regression drops below these targets the step fails,
-        but otherwise the workflow continues and publishes the reports.
+        SEO ≥ <code>${seoThreshold}</code>). Intercepted or DOM-only fallbacks are written as degraded
+        diagnostics and never satisfy this gate.
       </p>`;
 
   const notesHtml = `<p class="note">Each link opens the full Lighthouse HTML report for the given target.</p>`;
 
-  // Replace placeholders
   const sharedStyles = getSharedStyles(themes.lighthouse);
+  const degradedBanner = degradedMeasurementBannerHtml(
+    lighthouseDirectory,
+    processedTargets.map((target) => target.directory),
+  );
+
   html = html.replaceAll('{{SHARED_STYLES}}', sharedStyles);
-  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml);
+  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml + degradedBanner);
   html = html.replaceAll('{{LIST_ITEMS}}', listItems);
   html = html.replaceAll('{{NOTES}}', notesHtml);
 
   fs.writeFileSync(summaryPath, html);
 }
 
+type LighthouseRun = Awaited<ReturnType<typeof lighthouse>>;
+
+function numericCategoryScores(
+  result: LighthouseRun,
+  url: string,
+): {
+  performance: number;
+  accessibility: number;
+  bestPractices: number;
+  seo: number;
+} {
+  const scores = result?.lhr?.categories;
+  const statusAudit = result?.lhr?.audits?.['http-status-code'];
+  const runtimeError = result?.lhr?.runtimeError;
+  const diagnostics = `url=${url} http=${String(statusAudit?.displayValue)} runtime=${runtimeError ? JSON.stringify(runtimeError) : 'none'}`;
+  if (!isTargetHttpStatus(statusAudit?.score, statusAudit?.displayValue)) {
+    throw new Error(
+      `Lighthouse did not measure ${url} (HTTP ${String(statusAudit?.displayValue)}). Invalid measurement before any threshold comparison. ${diagnostics}`,
+    );
+  }
+  return {
+    performance: requireNumericScore('performance', scores?.['performance']?.score, diagnostics),
+    accessibility: requireNumericScore(
+      'accessibility',
+      scores?.['accessibility']?.score,
+      diagnostics,
+    ),
+    bestPractices: requireNumericScore(
+      'best-practices',
+      scores?.['best-practices']?.score,
+      diagnostics,
+    ),
+    seo: requireNumericScore('seo', scores?.['seo']?.score, diagnostics),
+  };
+}
+
 for (const target of lighthouseTargets) {
   test(`lighthouse audit – ${target.name}`, async ({ browser }) => {
     const browserType = browser?.browserType();
     const executablePath = browserType?.executablePath();
+    const profile = profileForTargetName(target.name);
 
     // eslint-disable-next-line playwright/no-conditional-in-test -- Required validation before launching browser
     if (!executablePath) throw new Error('Browser executable path not available');
@@ -135,15 +182,20 @@ for (const target of lighthouseTargets) {
         port,
       };
 
-      const runnerResult = await lighthouse(target.url, lighthouseOptions, desktopConfig);
-
+      const liveResult = await lighthouse(target.url, lighthouseOptions, desktopConfig);
+      if (!liveResult) {
+        throw new Error(`Lighthouse returned no result for ${target.url}`);
+      }
       const safeName = sanitizeTestName(target.name);
       const targetDirectory = path.join(lighthouseDirectory, safeName);
       fs.mkdirSync(targetDirectory, { recursive: true });
 
+      const liveBlocker = lighthouseLiveMeasurementBlocked(liveResult, target.url);
+      const finalUrl = liveResult.lhr?.finalUrl ?? liveResult.lhr?.requestedUrl ?? target.url;
+
       const timestamp = Date.now();
       const htmlReportPath = path.join(targetDirectory, `lighthouse-report-${timestamp}.html`);
-      const reportContent = runnerResult?.report;
+      const reportContent = liveResult?.report;
       // eslint-disable-next-line playwright/no-conditional-in-test -- Report content type check before writing
       if (reportContent && typeof reportContent === 'string') {
         fs.writeFileSync(htmlReportPath, reportContent);
@@ -151,28 +203,49 @@ for (const target of lighthouseTargets) {
       }
 
       const jsonReportPath = path.join(targetDirectory, `lighthouse-report-${timestamp}.json`);
-      fs.writeFileSync(jsonReportPath, JSON.stringify(runnerResult?.lhr ?? {}, undefined, 2));
+      fs.writeFileSync(jsonReportPath, JSON.stringify(liveResult?.lhr ?? {}, undefined, 2));
+
+      writeMeasurementModeMarker(targetDirectory, 'live', {
+        seedUrl: target.url,
+        finalUrl,
+        liveGateBlocked: liveBlocker !== undefined,
+      });
 
       processedTargets.push({ name: target.name, directory: safeName, url: target.url });
       writeSummary();
 
-      const scores = runnerResult?.lhr?.categories;
-      const performance = scores?.['performance']?.score;
-      const accessibility = scores?.['accessibility']?.score;
-      const bestPractices = scores?.['best-practices']?.score;
-      const seo = scores?.['seo']?.score;
+      if (liveBlocker) {
+        await writeDegradedDomDiagnostics(targetDirectory, target.url, liveBlocker, desktopConfig);
+        throw new Error(
+          `Live Lighthouse navigation gate failed for ${target.name}: ${liveBlocker}. Degraded DOM diagnostics were saved under degraded-dom/ and do not satisfy thresholds.`,
+        );
+      }
 
-      console.log(`Lighthouse scores for ${target.name}:`, {
-        performance,
-        accessibility,
-        bestPractices,
-        seo,
+      verifyLighthouseScoredDocument(liveResult, profile, target.url);
+
+      const gatedCategories = lighthouseCategoriesForTarget(target.name);
+      expect(gatedCategories.length).toBeGreaterThan(0);
+
+      const measured = numericCategoryScores(liveResult, target.url);
+
+      console.log(`Lighthouse live scores for ${target.name}:`, {
+        ...measured,
+        finalUrl,
+        gatedCategories,
       });
 
-      expect(performance).toBeGreaterThanOrEqual(performanceThreshold);
-      expect(accessibility).toBeGreaterThanOrEqual(accessibilityThreshold);
-      expect(bestPractices).toBeGreaterThanOrEqual(bestPracticesThreshold);
-      expect(seo).toBeGreaterThanOrEqual(seoThreshold);
+      if (gatedCategories.includes('performance')) {
+        expect(measured.performance).toBeGreaterThanOrEqual(performanceThreshold);
+      }
+      if (gatedCategories.includes('accessibility')) {
+        expect(measured.accessibility).toBeGreaterThanOrEqual(accessibilityThreshold);
+      }
+      if (gatedCategories.includes('best-practices')) {
+        expect(measured.bestPractices).toBeGreaterThanOrEqual(bestPracticesThreshold);
+      }
+      if (gatedCategories.includes('seo')) {
+        expect(measured.seo).toBeGreaterThanOrEqual(seoThreshold);
+      }
     } finally {
       chrome.kill();
     }

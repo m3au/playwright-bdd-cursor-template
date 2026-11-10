@@ -1,8 +1,7 @@
 import * as fs from 'node:fs';
-import net from 'node:net';
 import path from 'node:path';
 
-import { chromium, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 
@@ -10,14 +9,11 @@ import { environment, sanitizeTestName, waitForPort } from '@utils';
 
 import { getSharedStyles, themes } from '../../scripts/template-utils';
 
+import { verifyLiveTargetIdentity, writeDegradedDomDiagnostics } from './lighthouse-live-gate';
 import {
-  assertLiveTargetDocument,
-  assertProbedLiveTargetDocument,
   isTargetHttpStatus,
   lighthouseLiveMeasurementBlocked,
-  prefetchAuditDocument,
   requireNumericScore,
-  verifyEssentialAssets,
   writeMeasurementModeMarker,
 } from './measurement';
 import { profileForTargetName } from './target-profiles';
@@ -134,63 +130,6 @@ function numericCategoryScores(
   };
 }
 
-async function measureDegradedDomDocument(
-  url: string,
-  config: Parameters<typeof lighthouse>[2],
-): Promise<LighthouseRun> {
-  const prefetched = await prefetchAuditDocument(url);
-  if (prefetched.status !== 200) {
-    throw new Error(
-      `Degraded DOM probe could not prefetch ${url} (status ${prefetched.status}).`,
-    );
-  }
-
-  const port = await new Promise<number>((resolve, reject) => {
-    const listener = net.createServer();
-    listener.listen(0, '127.0.0.1', () => {
-      const address = listener.address();
-      const freePort = typeof address === 'object' && address ? address.port : 0;
-      listener.close(() => resolve(freePort));
-    });
-    listener.on('error', reject);
-  });
-
-  const browser = await chromium.launch({
-    headless: true,
-    args: [`--remote-debugging-port=${port}`, '--remote-allow-origins=*'],
-  });
-  try {
-    const session = await browser.newBrowserCDPSession();
-    await session.send('Fetch.enable', {
-      patterns: [{ urlPattern: `${url}*`, requestStage: 'Request' }],
-    });
-    session.on('Fetch.requestPaused', async (event) => {
-      if (event.resourceType === 'Document' && event.request.url.startsWith(url)) {
-        await session.send('Fetch.fulfillRequest', {
-          requestId: event.requestId,
-          responseCode: 200,
-          responseHeaders: [{ name: 'content-type', value: 'text/html; charset=utf-8' }],
-          body: Buffer.from(prefetched.html).toString('base64'),
-        });
-        return;
-      }
-      await session.send('Fetch.continueRequest', { requestId: event.requestId });
-    });
-    return await lighthouse(
-      url,
-      {
-        logLevel: 'error',
-        output: 'html',
-        onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
-        port,
-      },
-      config,
-    );
-  } finally {
-    await browser.close();
-  }
-}
-
 for (const target of lighthouseTargets) {
   test(`lighthouse audit – ${target.name}`, async ({ browser }) => {
     const browserType = browser?.browserType();
@@ -275,65 +214,13 @@ for (const target of lighthouseTargets) {
       writeSummary();
 
       if (liveBlocker) {
-        const degradedDirectory = path.join(targetDirectory, 'degraded-dom');
-        fs.mkdirSync(degradedDirectory, { recursive: true });
-        try {
-          const degraded = await measureDegradedDomDocument(target.url, desktopConfig);
-          if (!degraded) {
-            throw new Error(`Degraded Lighthouse probe returned no result for ${target.url}`);
-          }
-          const degradedHtml = degraded.report;
-          if (typeof degradedHtml === 'string') {
-            fs.writeFileSync(path.join(degradedDirectory, 'index.html'), degradedHtml);
-          }
-          fs.writeFileSync(
-            path.join(degradedDirectory, 'report.json'),
-            JSON.stringify(degraded.lhr ?? {}, undefined, 2),
-          );
-          writeMeasurementModeMarker(degradedDirectory, 'degraded-dom', {
-            reason: liveBlocker,
-            satisfiesLiveGate: false,
-          });
-        } catch (degradedError) {
-          const message =
-            degradedError instanceof Error ? degradedError.message : String(degradedError);
-          writeMeasurementModeMarker(degradedDirectory, 'degraded-dom', {
-            reason: liveBlocker,
-            satisfiesLiveGate: false,
-            degradedError: message,
-          });
-        }
-
+        await writeDegradedDomDiagnostics(targetDirectory, target.url, liveBlocker, desktopConfig);
         throw new Error(
           `Live Lighthouse navigation gate failed for ${target.name}: ${liveBlocker}. Degraded DOM diagnostics were saved under degraded-dom/ and do not satisfy thresholds.`,
         );
       }
 
-      if (profile.identityProbe === 'live-rendered') {
-        const validationPage = await browser.newPage();
-        try {
-          const response = await validationPage.goto(target.url, {
-            waitUntil: 'load',
-            timeout: 60_000,
-          });
-          if (profile.renderedReadySelector) {
-            await expect(validationPage.locator(profile.renderedReadySelector).first()).toBeVisible({
-              timeout: 60_000,
-            });
-          }
-          assertProbedLiveTargetDocument(profile, {
-            finalUrl: validationPage.url(),
-            status: response?.status() ?? 0,
-            title: await validationPage.title(),
-            html: await validationPage.content(),
-          });
-          await verifyEssentialAssets(validationPage.url(), profile);
-        } finally {
-          await validationPage.close();
-        }
-      } else {
-        await assertLiveTargetDocument(target.url, profile, finalUrl);
-      }
+      await verifyLiveTargetIdentity(browser, target.url, profile, finalUrl);
 
       const measured = numericCategoryScores(liveResult, target.url);
       const { performance, accessibility, bestPractices, seo } = measured;

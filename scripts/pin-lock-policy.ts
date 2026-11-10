@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-set-has -- YAML fragments are substring scans, not Set membership */
 /**
  * Workflow expectations for the Dependabot pin job and audit gates.
  */
@@ -24,31 +25,42 @@ export function auditRunStepBlocksGate(workflowContents: string, workflowFile: s
     return false;
   }
   const commandIndex = workflowContents.indexOf(`run: ${command}`);
-  if (commandIndex < 0) {
+  if (commandIndex === -1) {
     return false;
   }
   const preceding = workflowContents.slice(Math.max(0, commandIndex - 400), commandIndex);
-  return !preceding.includes('continue-on-error: true') && !/\|\|\s*true/.test(preceding);
+  const maskedPatterns = new Set(['continue-on-error: true', '|| true']);
+  for (const pattern of maskedPatterns) {
+    if (preceding.includes(pattern)) {
+      return false;
+    }
+  }
+  return true;
 }
 
+const auditCommands = ['bun run lighthouse', 'bun run axe', 'bun run test:performance'] as const;
+
 export function auditRunStepsMaskFailures(workflowContents: string): boolean {
-  if (workflowContents.includes('continue-on-error: true')) {
-    const segments = workflowContents.split(/^  \S+:/m);
-    for (const segment of segments) {
-      if (
-        segment.includes('run: bun run lighthouse') ||
-        segment.includes('run: bun run axe') ||
-        segment.includes('run: bun run test:performance')
-      ) {
-        if (segment.includes('continue-on-error: true') || /\|\|\s*true/.test(segment)) {
+  for (const command of auditCommands) {
+    const needle = `run: ${command}`;
+    let searchFrom = 0;
+    let commandIndex = workflowContents.indexOf(needle, searchFrom);
+    while (commandIndex !== -1) {
+      const segment = workflowContents.slice(
+        Math.max(0, commandIndex - 400),
+        commandIndex + needle.length + 200,
+      );
+      const maskedPatterns = new Set(['continue-on-error: true', '|| true']);
+      for (const pattern of maskedPatterns) {
+        if (segment.includes(pattern)) {
           return true;
         }
       }
+      searchFrom = commandIndex + needle.length;
+      commandIndex = workflowContents.indexOf(needle, searchFrom);
     }
   }
-  return /\n\s+run: bun run (lighthouse|axe|test:performance).*\|\|\s*true/m.test(
-    workflowContents,
-  );
+  return false;
 }
 
 const isDirectRun = import.meta.main === true;

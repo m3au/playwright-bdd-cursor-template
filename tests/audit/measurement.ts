@@ -63,13 +63,45 @@ export function requireNumericScore(
   return score;
 }
 
+function removeHtmlSections(html: string, tagName: string): string {
+  const openTag = `<${tagName}`;
+  const closeTag = `</${tagName}>`;
+  let result = html;
+  const lower = result.toLowerCase();
+  let openIndex = lower.indexOf(openTag);
+  while (openIndex !== -1) {
+    const closeIndex = lower.indexOf(closeTag, openIndex);
+    if (closeIndex === -1) {
+      break;
+    }
+    result = `${result.slice(0, openIndex)} ${result.slice(closeIndex + closeTag.length)}`;
+    openIndex = result.toLowerCase().indexOf(openTag);
+  }
+  return result;
+}
+
+function stripHtmlTags(html: string): string {
+  let visible = '';
+  let inTag = false;
+  for (const char of html) {
+    if (char === '<') {
+      inTag = true;
+      continue;
+    }
+    if (char === '>') {
+      inTag = false;
+      continue;
+    }
+    if (!inTag) {
+      visible += char;
+    }
+  }
+  return visible;
+}
+
 export function visibleTextLength(html: string): number {
-  return html
-    .replaceAll(/<script[\s\S]*?<\/script>/gi, ' ')
-  .replaceAll(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replaceAll(/<[^>]+>/g, ' ')
-    .replaceAll(/\s+/g, ' ')
-    .trim().length;
+  const withoutScripts = removeHtmlSections(removeHtmlSections(html, 'script'), 'style');
+  return stripHtmlTags(withoutScripts).replaceAll(/\s+/g, ' ').trim().length;
 }
 
 export function validateTargetDocument(
@@ -106,14 +138,16 @@ export function validateTargetDocument(
     }
   }
   const bodyText =
-    profile.identityProbe === 'live-rendered'
-      ? html.toLowerCase()
-      : html.replaceAll(/<[^>]+>/g, ' ').toLowerCase();
+    profile.identityProbe === 'live-rendered' ? html.toLowerCase() : stripHtmlTags(html).toLowerCase();
   for (const fragment of profile.requiredBodyFragments) {
     if (!bodyText.includes(fragment.toLowerCase())) {
       throw new Error(`Body for ${profile.id} is missing required marker "${fragment}".`);
     }
   }
+}
+
+function normalizeUrlPath(pathname: string): string {
+  return pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
 }
 
 export function assertFinalUrlMatchesSeed(finalUrl: string, profile: AuditTargetProfile): void {
@@ -124,10 +158,8 @@ export function assertFinalUrlMatchesSeed(finalUrl: string, profile: AuditTarget
       `Final URL origin ${actual.origin} does not match intended target ${expected.origin} for ${profile.id}.`,
     );
   }
-  const normalizePath = (pathname: string): string =>
-    pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
-  const expectedPath = normalizePath(expected.pathname);
-  const actualPath = normalizePath(actual.pathname);
+  const expectedPath = normalizeUrlPath(expected.pathname);
+  const actualPath = normalizeUrlPath(actual.pathname);
   if (actualPath !== expectedPath && !actualPath.startsWith(`${expectedPath}/`)) {
     throw new Error(
       `Final URL path ${actual.pathname} does not match intended target ${expected.pathname} for ${profile.id}.`,

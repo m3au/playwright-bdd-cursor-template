@@ -56,6 +56,14 @@
 
 - **test**: audit the real documents and count ReqRes Artillery work
 
+## [🐛 Fix detected: 1.16.6 -> 1.16.7
+
+1.16.7] - 2026-11-10
+
+### Fixed
+
+- **test**: satisfy audit lint and split lighthouse live gate helpers
+
 ## [1.15.0] - 2025-11-20
 
 ### Added

@@ -10,7 +10,17 @@ import { environment, sanitizeTestName, waitForPort } from '@utils';
 
 import { getSharedStyles, themes } from '../../scripts/template-utils';
 
-import { isTargetHttpStatus, prefetchAuditDocument, requireNumericScore } from './measurement';
+import {
+  assertLiveTargetDocument,
+  assertProbedLiveTargetDocument,
+  isTargetHttpStatus,
+  lighthouseLiveMeasurementBlocked,
+  prefetchAuditDocument,
+  requireNumericScore,
+  verifyEssentialAssets,
+  writeMeasurementModeMarker,
+} from './measurement';
+import { profileForTargetName } from './target-profiles';
 
 interface LighthouseTarget {
   name: string;
@@ -70,14 +80,15 @@ function writeSummary(): void {
 
   const descriptionHtml = `
       <p>
-        These runs enforce baseline thresholds (performance ≥ <code>${performanceThreshold}</code>,
+        These runs enforce baseline thresholds on <strong>live navigation only</strong>
+        (performance ≥ <code>${performanceThreshold}</code>,
         accessibility ≥ <code>${accessibilityThreshold}</code>, best-practices ≥ <code>${bestPracticesThreshold}</code>,
-        SEO ≥ <code>${seoThreshold}</code>). A score below a threshold fails the Lighthouse command.
+        SEO ≥ <code>${seoThreshold}</code>). Intercepted or DOM-only fallbacks are written as degraded
+        diagnostics and never satisfy this gate.
       </p>`;
 
   const notesHtml = `<p class="note">Each link opens the full Lighthouse HTML report for the given target.</p>`;
 
-  // Replace placeholders
   const sharedStyles = getSharedStyles(themes.lighthouse);
   html = html.replaceAll('{{SHARED_STYLES}}', sharedStyles);
   html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml);
@@ -88,23 +99,6 @@ function writeSummary(): void {
 }
 
 type LighthouseRun = Awaited<ReturnType<typeof lighthouse>>;
-
-async function collectLighthouse(
-  url: string,
-  options: Parameters<typeof lighthouse>[1],
-  config: Parameters<typeof lighthouse>[2],
-): Promise<LighthouseRun> {
-  const first = await lighthouse(url, options, config);
-  if (!measurementInvalid(first)) return first;
-  return measureFulfilledDocument(url, config);
-}
-
-function measurementInvalid(result: LighthouseRun): boolean {
-  const performance = result?.lhr?.categories?.['performance']?.score;
-  const status = result?.lhr?.audits?.['http-status-code'];
-  if (typeof performance !== 'number') return true;
-  return !isTargetHttpStatus(status?.score, status?.displayValue);
-}
 
 function numericCategoryScores(
   result: LighthouseRun,
@@ -140,14 +134,14 @@ function numericCategoryScores(
   };
 }
 
-async function measureFulfilledDocument(
+async function measureDegradedDomDocument(
   url: string,
   config: Parameters<typeof lighthouse>[2],
 ): Promise<LighthouseRun> {
   const prefetched = await prefetchAuditDocument(url);
   if (prefetched.status !== 200) {
     throw new Error(
-      `Lighthouse could not prefetch ${url} (status ${prefetched.status}). Invalid measurement before any threshold comparison.`,
+      `Degraded DOM probe could not prefetch ${url} (status ${prefetched.status}).`,
     );
   }
 
@@ -201,6 +195,7 @@ for (const target of lighthouseTargets) {
   test(`lighthouse audit – ${target.name}`, async ({ browser }) => {
     const browserType = browser?.browserType();
     const executablePath = browserType?.executablePath();
+    const profile = profileForTargetName(target.name);
 
     // eslint-disable-next-line playwright/no-conditional-in-test -- Required validation before launching browser
     if (!executablePath) throw new Error('Browser executable path not available');
@@ -247,15 +242,20 @@ for (const target of lighthouseTargets) {
         port,
       };
 
-      const runnerResult = await collectLighthouse(target.url, lighthouseOptions, desktopConfig);
-
+      const liveResult = await lighthouse(target.url, lighthouseOptions, desktopConfig);
+      if (!liveResult) {
+        throw new Error(`Lighthouse returned no result for ${target.url}`);
+      }
       const safeName = sanitizeTestName(target.name);
       const targetDirectory = path.join(lighthouseDirectory, safeName);
       fs.mkdirSync(targetDirectory, { recursive: true });
 
+      const liveBlocker = lighthouseLiveMeasurementBlocked(liveResult, target.url);
+      const finalUrl = liveResult.lhr?.finalUrl ?? liveResult.lhr?.requestedUrl ?? target.url;
+
       const timestamp = Date.now();
       const htmlReportPath = path.join(targetDirectory, `lighthouse-report-${timestamp}.html`);
-      const reportContent = runnerResult?.report;
+      const reportContent = liveResult?.report;
       // eslint-disable-next-line playwright/no-conditional-in-test -- Report content type check before writing
       if (reportContent && typeof reportContent === 'string') {
         fs.writeFileSync(htmlReportPath, reportContent);
@@ -263,19 +263,87 @@ for (const target of lighthouseTargets) {
       }
 
       const jsonReportPath = path.join(targetDirectory, `lighthouse-report-${timestamp}.json`);
-      fs.writeFileSync(jsonReportPath, JSON.stringify(runnerResult?.lhr ?? {}, undefined, 2));
+      fs.writeFileSync(jsonReportPath, JSON.stringify(liveResult?.lhr ?? {}, undefined, 2));
+
+      writeMeasurementModeMarker(targetDirectory, 'live', {
+        seedUrl: target.url,
+        finalUrl,
+        liveGateBlocked: liveBlocker !== undefined,
+      });
 
       processedTargets.push({ name: target.name, directory: safeName, url: target.url });
       writeSummary();
 
-      const measured = numericCategoryScores(runnerResult, target.url);
+      if (liveBlocker) {
+        const degradedDirectory = path.join(targetDirectory, 'degraded-dom');
+        fs.mkdirSync(degradedDirectory, { recursive: true });
+        try {
+          const degraded = await measureDegradedDomDocument(target.url, desktopConfig);
+          if (!degraded) {
+            throw new Error(`Degraded Lighthouse probe returned no result for ${target.url}`);
+          }
+          const degradedHtml = degraded.report;
+          if (typeof degradedHtml === 'string') {
+            fs.writeFileSync(path.join(degradedDirectory, 'index.html'), degradedHtml);
+          }
+          fs.writeFileSync(
+            path.join(degradedDirectory, 'report.json'),
+            JSON.stringify(degraded.lhr ?? {}, undefined, 2),
+          );
+          writeMeasurementModeMarker(degradedDirectory, 'degraded-dom', {
+            reason: liveBlocker,
+            satisfiesLiveGate: false,
+          });
+        } catch (degradedError) {
+          const message =
+            degradedError instanceof Error ? degradedError.message : String(degradedError);
+          writeMeasurementModeMarker(degradedDirectory, 'degraded-dom', {
+            reason: liveBlocker,
+            satisfiesLiveGate: false,
+            degradedError: message,
+          });
+        }
+
+        throw new Error(
+          `Live Lighthouse navigation gate failed for ${target.name}: ${liveBlocker}. Degraded DOM diagnostics were saved under degraded-dom/ and do not satisfy thresholds.`,
+        );
+      }
+
+      if (profile.identityProbe === 'live-rendered') {
+        const validationPage = await browser.newPage();
+        try {
+          const response = await validationPage.goto(target.url, {
+            waitUntil: 'load',
+            timeout: 60_000,
+          });
+          if (profile.renderedReadySelector) {
+            await expect(validationPage.locator(profile.renderedReadySelector).first()).toBeVisible({
+              timeout: 60_000,
+            });
+          }
+          assertProbedLiveTargetDocument(profile, {
+            finalUrl: validationPage.url(),
+            status: response?.status() ?? 0,
+            title: await validationPage.title(),
+            html: await validationPage.content(),
+          });
+          await verifyEssentialAssets(validationPage.url(), profile);
+        } finally {
+          await validationPage.close();
+        }
+      } else {
+        await assertLiveTargetDocument(target.url, profile, finalUrl);
+      }
+
+      const measured = numericCategoryScores(liveResult, target.url);
       const { performance, accessibility, bestPractices, seo } = measured;
 
-      console.log(`Lighthouse scores for ${target.name}:`, {
+      console.log(`Lighthouse live scores for ${target.name}:`, {
         performance,
         accessibility,
         bestPractices,
         seo,
+        finalUrl,
       });
 
       expect(performance).toBeGreaterThanOrEqual(performanceThreshold);

@@ -36,6 +36,12 @@ jobs:
       - name: Pin dependency versions
         run: bun run pin
 
+      - name: Regenerate lockfile for pinned manifest
+        run: bun install
+
+      - name: Verify lockfile matches manifest
+        run: bun install --frozen-lockfile
+
       # bun install can rewrite bun.lock when versions are already exact.
       # A lockfile-only diff is discarded. A package.json change commits both
       # package.json and bun.lock so the lock matches the pins.

@@ -18,7 +18,7 @@ export function verifyLighthouseScoredDocument(
   if (!result) {
     throw new Error(`Lighthouse returned no result for ${seedUrl}`);
   }
-  assertLighthouseScoredIdentity(result, profile, seedUrl);
+  assertLighthouseScoredIdentity(result, profile);
 }
 
 export async function measureDegradedDomDocument(

@@ -13,6 +13,8 @@ export interface AuditTargetProfileTemplate {
   readonly essentialAssets: readonly string[];
   readonly minVisibleTextLength: number;
   readonly minHtmlLength: number;
+  /** When Lighthouse scores only the main-document artifact, a smaller payload may be valid. */
+  readonly minHtmlLengthScored?: number;
   readonly identityProbe: AuditIdentityProbe;
   readonly bodyMarkerScope: 'body' | 'document';
   readonly renderedReadySelector?: string;
@@ -27,10 +29,11 @@ const profileTemplates: Record<string, AuditTargetProfileTemplate> = {
     id: 'polymer-shop',
     seedUrlEnv: 'BASE_URL_LIGHTHOUSE_POLYMER',
     requiredTitleFragments: ['shop'],
-    requiredBodyFragments: ['polymer'],
+    requiredBodyFragments: ['polymer', 'shop-app'],
     essentialAssets: ['es5-bundled/'],
     minVisibleTextLength: 10,
-    minHtmlLength: 10,
+    minHtmlLength: 10 * 1024,
+    minHtmlLengthScored: 1000,
     identityProbe: 'static-html',
     bodyMarkerScope: 'document',
     renderedReadySelector: 'shop-home',

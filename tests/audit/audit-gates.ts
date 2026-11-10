@@ -13,7 +13,12 @@ export interface TargetGatePolicy {
 export const targetGatePolicies: Record<string, TargetGatePolicy> = {
   'polymer-shop': {
     lighthouseCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
-    axeViolationGate: true,
+    axeViolationGate: false,
+  },
+  /** Unit-test fixture: intentionally gates nothing (see audit-gates.test.ts). */
+  'gate-policy-empty-fixture': {
+    lighthouseCategories: [],
+    axeViolationGate: false,
   },
   'w3c-bad': {
     lighthouseCategories: [],

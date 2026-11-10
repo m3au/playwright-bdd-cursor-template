@@ -27,7 +27,7 @@ const w3cProfileTemplate = {
 const w3cProfile = { ...w3cProfileTemplate, seedUrl: 'http://127.0.0.1:8765/before/home.html' };
 
 const validW3cHtml = `<!doctype html><html><head><title>Welcome to CityLights! [Inaccessible Home Page]</title></head>
-<body><p>Welcome to the inaccessible CityLights demo home page with enough visible copy for validation.</p></body></html>`;
+<body><p>Welcome to the inaccessible CityLights demo home page with enough visible copy for validation and markers for welcome and citylights in the body.</p>${'<span aria-hidden="true">.</span>'.repeat(200)}</body></html>`;
 
 describe('validateTargetDocument', () => {
   test('accepts the intended W3C before home markers', () => {
@@ -55,8 +55,7 @@ describe('validateTargetDocument', () => {
   });
 
   test('rejects an empty document body', () => {
-    const emptyHtml =
-      '<html><head><title>Welcome to CityLights! [Inaccessible Home Page]</title></head><body></body></html>';
+    const emptyHtml = `<html><head><title>Welcome to CityLights! [Inaccessible Home Page]</title>${'<!-- padding -->'.repeat(40)}</head><body></body></html>`;
     expect(() =>
       validateTargetDocument(emptyHtml, 'Welcome to CityLights! [Inaccessible Home Page]', w3cProfile),
     ).toThrow(/insufficient body content/i);
@@ -149,12 +148,14 @@ describe('lighthouseLiveMeasurementBlocked', () => {
 });
 
 describe('assertLighthouseScoredIdentity', () => {
+  const scoredW3cBody = `${validW3cHtml}`.repeat(2);
+
   test('validates the Lighthouse-scored document title and content', () => {
     expect(() =>
       assertLighthouseScoredIdentity(
         {
           artifacts: {
-            MainDocumentContent: `<html><head><title>Welcome to CityLights! [Inaccessible Home Page]</title></head><body><p>Welcome CityLights inaccessible content</p></body></html>`,
+            MainDocumentContent: scoredW3cBody,
           },
           lhr: {
             finalUrl: w3cProfile.seedUrl,
@@ -164,9 +165,54 @@ describe('assertLighthouseScoredIdentity', () => {
           },
         },
         w3cProfile,
-        w3cProfile.seedUrl,
       ),
     ).not.toThrow();
+  });
+
+  test('rejects a challenge page served with HTTP 200 in MainDocumentContent', () => {
+    expect(() =>
+      assertLighthouseScoredIdentity(
+        {
+          artifacts: {
+            MainDocumentContent: `${'<html><head><title>Just a moment...</title></head><body>'.repeat(40)}<div class="cf-browser-verification"></div></body></html>`,
+          },
+          lhr: {
+            finalUrl: w3cProfile.seedUrl,
+            audits: { 'http-status-code': { displayValue: '200' } },
+          },
+        },
+        w3cProfile,
+      ),
+    ).toThrow(/challenge/i);
+  });
+
+  test('rejects missing MainDocumentContent', () => {
+    expect(() =>
+      assertLighthouseScoredIdentity(
+        {
+          lhr: {
+            finalUrl: w3cProfile.seedUrl,
+            audits: { 'http-status-code': { displayValue: '200' } },
+          },
+        },
+        w3cProfile,
+      ),
+    ).toThrow(/MainDocumentContent/i);
+  });
+
+  test('rejects a finalUrl that does not match the seed', () => {
+    expect(() =>
+      assertLighthouseScoredIdentity(
+        {
+          artifacts: { MainDocumentContent: scoredW3cBody },
+          lhr: {
+            finalUrl: 'http://127.0.0.1:8765/after/home.html',
+            audits: { 'http-status-code': { displayValue: '200' } },
+          },
+        },
+        w3cProfile,
+      ),
+    ).toThrow(/final url|path/i);
   });
 });
 

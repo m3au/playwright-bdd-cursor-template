@@ -1,28 +1,30 @@
 # Changelog
 
-## [🐛 Fix detected: 1.16.7 -> 1.16.8
+## [🐛 Fix detected: 1.16.10 -> 1.16.11
 
-1.16.8] - 2026-11-10
+1.16.11] - 2026-11-10
 
 ### Fixed
 
-- **test**: validate identity on scored and scanned documents
+- **test**: fail closed on Lighthouse scored identity and round 3 SHOULDs
 
-## [🐛 Fix detected: 1.16.8 -> 1.16.9
+## [1.16.10] - 2026-11-10
 
-1.16.9] - 2026-11-10
+### Fixed
+
+- **lint**: satisfy sonar and unicorn rules in audit tests
+
+## [1.16.9] - 2026-11-10
 
 ### Fixed
 
 - **types**: widen Lighthouse audit map typing
 
-## [🐛 Fix detected: 1.16.9 -> 1.16.10
-
-1.16.10] - 2026-11-10
+## [1.16.8] - 2026-11-10
 
 ### Fixed
 
-- **lint**: satisfy sonar and unicorn rules in audit tests
+- **test**: validate identity on scored and scanned documents
 
 ## [1.16.0] - 2025-11-20
 

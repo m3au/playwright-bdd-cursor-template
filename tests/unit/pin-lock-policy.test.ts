@@ -70,9 +70,11 @@ describe('frozen lockfile drift', () => {
     const parsed = JSON.parse(readFileSync(path.join(temporaryDirectory, 'package.json'), 'utf8')) as {
       devDependencies?: Record<string, string>;
     };
+    const dotenvVersion = parsed.devDependencies?.['dotenv'];
+    expect(dotenvVersion).toBeDefined();
     parsed.devDependencies = {
       ...parsed.devDependencies,
-      'totally-fake-package-drift-test': '1.0.0',
+      dotenv: '17.2.2',
     };
     writeFileSync(path.join(temporaryDirectory, 'package.json'), JSON.stringify(parsed, undefined, 2));
 
@@ -82,5 +84,7 @@ describe('frozen lockfile drift', () => {
       stderr: 'pipe',
     });
     expect(result.exitCode).not.toBe(0);
+    const combined = `${result.stderr.toString()}\n${result.stdout.toString()}`.toLowerCase();
+    expect(combined).toMatch(/lockfile|frozen|mismatch|not found in lockfile/);
   });
 });

@@ -115,13 +115,13 @@ export function validateTargetDocument(
     );
   }
 
-  if (profile.identityProbe === 'live-rendered') {
-    if (html.length < profile.minHtmlLength) {
-      throw new Error(
-        `Document for ${profile.id} has insufficient HTML payload (${html.length} bytes).`,
-      );
-    }
-  } else {
+  if (html.length < profile.minHtmlLength) {
+    throw new Error(
+      `Document for ${profile.id} has insufficient HTML payload (${html.length} bytes, need at least ${profile.minHtmlLength}).`,
+    );
+  }
+
+  if (profile.identityProbe !== 'live-rendered') {
     const visibleLength = visibleTextLength(html);
     if (visibleLength < profile.minVisibleTextLength) {
       throw new Error(
@@ -241,47 +241,41 @@ export interface LighthouseResultLike {
   } | null;
 }
 
-export function lighthouseDocumentProbe(
-  result: LighthouseResultLike,
-  seedUrl: string,
-): LiveDocumentProbe {
+export function lighthouseDocumentProbe(result: LighthouseResultLike): LiveDocumentProbe {
   const lhr = result.lhr;
   if (!lhr) {
     throw new Error('Lighthouse result is missing lhr');
   }
-  const finalUrl = lhr.finalUrl ?? lhr.requestedUrl ?? seedUrl;
-  const mainHtml = result.artifacts?.MainDocumentContent ?? '';
-  const title =
-    mainHtml.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() ??
-    String(lhr.audits?.['document-title']?.displayValue ?? '');
-  const audits = lhr.audits ?? {};
-  const fallbackChunks = [
-    title,
-    JSON.stringify(audits['main-document-content']?.details ?? {}),
-    JSON.stringify(audits['link-text']?.details ?? {}),
-    String(audits['meta-description']?.displayValue ?? ''),
-    String(audits['dom-size']?.displayValue ?? ''),
-  ];
-  const html = mainHtml.length > 0 ? mainHtml : fallbackChunks.filter((chunk) => chunk.length > 0).join('\n');
+  if (!lhr.finalUrl) {
+    throw new Error('Lighthouse result is missing finalUrl');
+  }
+  const mainHtml = result.artifacts?.MainDocumentContent;
+  if (mainHtml === undefined || mainHtml === null || mainHtml === '') {
+    throw new Error('Lighthouse result is missing MainDocumentContent');
+  }
+  const title = mainHtml.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() ?? '';
   const statusCode = Number.parseInt(
     String(lhr.audits?.['http-status-code']?.displayValue ?? '200'),
     10,
   );
   return {
-    finalUrl,
+    finalUrl: lhr.finalUrl,
     status: Number.isFinite(statusCode) ? statusCode : 200,
     title,
-    html,
+    html: mainHtml,
   };
 }
 
 export function assertLighthouseScoredIdentity(
   result: LighthouseResultLike,
   profile: AuditTargetProfile,
-  seedUrl: string,
 ): void {
-  const probe = lighthouseDocumentProbe(result, seedUrl);
-  assertProbedLiveTargetDocument(profile, probe);
+  const probe = lighthouseDocumentProbe(result);
+  const scoredProfile =
+    profile.minHtmlLengthScored === undefined
+      ? profile
+      : { ...profile, minHtmlLength: profile.minHtmlLengthScored };
+  assertProbedLiveTargetDocument(scoredProfile, probe);
 }
 
 export function lighthouseLiveMeasurementBlocked(
@@ -313,4 +307,30 @@ export function writeMeasurementModeMarker(
     path.join(directory, 'measurement-mode.json'),
     JSON.stringify({ mode, ...details }, undefined, 2),
   );
+}
+
+export function degradedMeasurementBannerHtml(
+  reportRoot: string,
+  targetDirectories: readonly string[],
+): string {
+  const degradedTargets = targetDirectories.filter((directory) => {
+    const markerPath = path.join(reportRoot, directory, 'degraded-dom', 'measurement-mode.json');
+    if (!fs.existsSync(markerPath)) {
+      return false;
+    }
+    try {
+      const parsed = JSON.parse(fs.readFileSync(markerPath, 'utf8')) as { mode?: string };
+      return parsed.mode === 'degraded-dom';
+    } catch {
+      return false;
+    }
+  });
+  if (degradedTargets.length === 0) {
+    return '';
+  }
+  const list = degradedTargets.map((name) => `<code>${name}</code>`).join(', ');
+  return `<p class="note" role="alert" style="border:2px solid #c92a2a;padding:0.75rem;background:#fff5f5;">
+        <strong>Degraded DOM measurements present</strong> (${list}): these runs did not use live navigation
+        and <strong>do not</strong> satisfy audit gates. See each target&rsquo;s <code>degraded-dom/</code> folder.
+      </p>`;
 }

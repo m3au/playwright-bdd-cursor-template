@@ -10,6 +10,7 @@ import { getSharedStyles, themes } from '../../scripts/template-utils';
 
 import {
   assertProbedLiveTargetDocument,
+  degradedMeasurementBannerHtml,
   verifyEssentialAssetsWithRequest,
   writeMeasurementModeMarker,
 } from './measurement';
@@ -105,8 +106,13 @@ function writeSummary(): void {
       </p>`;
 
   const sharedStyles = getSharedStyles(themes.axe);
+  const degradedBanner = degradedMeasurementBannerHtml(
+    axeDirectory,
+    processedTargets.map((target) => target.directory),
+  );
+
   html = html.replaceAll('{{SHARED_STYLES}}', sharedStyles);
-  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml);
+  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml + degradedBanner);
   html = html.replaceAll('{{LIST_ITEMS}}', listItems);
   html = html.replaceAll('{{NOTES}}', notesHtml);
 
@@ -125,6 +131,14 @@ async function openLiveAuditDocument(page: Page, url: string, targetName: string
     );
   }
 
+  console.log(`Axe live navigation final URL for ${targetName}: ${finalUrl}`);
+
+  if (profile.renderedReadySelector) {
+    await expect(page.locator(profile.renderedReadySelector).first()).toBeVisible({
+      timeout: 60_000,
+    });
+  }
+
   const title = await page.title();
   const html = await page.content();
 
@@ -134,12 +148,6 @@ async function openLiveAuditDocument(page: Page, url: string, targetName: string
     title,
     html,
   });
-
-  if (profile.renderedReadySelector) {
-    await expect(page.locator(profile.renderedReadySelector).first()).toBeVisible({
-      timeout: 60_000,
-    });
-  }
 
   await verifyEssentialAssetsWithRequest(page.request, finalUrl, profile);
 }

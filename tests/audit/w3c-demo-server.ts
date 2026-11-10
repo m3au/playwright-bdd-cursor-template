@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { createReadStream, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import path from 'node:path';
 
@@ -39,8 +39,8 @@ export async function verifyW3cBadZipSha256(): Promise<void> {
 
 export function extractW3cBadDemo(): void {
   verifyW3cBadZipOnDisk();
-  if (existsSync(path.join(siteRoot, 'before', 'home.html'))) {
-    return;
+  if (existsSync(siteRoot)) {
+    rmSync(siteRoot, { recursive: true, force: true });
   }
   mkdirSync(siteRoot, { recursive: true });
   const unzipPath = '/usr/bin/unzip';

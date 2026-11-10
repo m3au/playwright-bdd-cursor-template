@@ -11,6 +11,7 @@ import { getSharedStyles, themes } from '../../scripts/template-utils';
 
 import { verifyLighthouseScoredDocument, writeDegradedDomDiagnostics } from './lighthouse-live-gate';
 import {
+  degradedMeasurementBannerHtml,
   isTargetHttpStatus,
   lighthouseLiveMeasurementBlocked,
   requireNumericScore,
@@ -81,8 +82,13 @@ function writeSummary(): void {
   const notesHtml = `<p class="note">Each link opens the full Lighthouse HTML report for the given target.</p>`;
 
   const sharedStyles = getSharedStyles(themes.lighthouse);
+  const degradedBanner = degradedMeasurementBannerHtml(
+    lighthouseDirectory,
+    processedTargets.map((target) => target.directory),
+  );
+
   html = html.replaceAll('{{SHARED_STYLES}}', sharedStyles);
-  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml);
+  html = html.replaceAll('{{DESCRIPTION}}', descriptionHtml + degradedBanner);
   html = html.replaceAll('{{LIST_ITEMS}}', listItems);
   html = html.replaceAll('{{NOTES}}', notesHtml);
 
@@ -218,6 +224,8 @@ for (const target of lighthouseTargets) {
       verifyLighthouseScoredDocument(liveResult, profile, target.url);
 
       const gatedCategories = lighthouseCategoriesForTarget(target.name);
+      expect(gatedCategories.length).toBeGreaterThan(0);
+
       const measured = numericCategoryScores(liveResult, target.url);
 
       console.log(`Lighthouse live scores for ${target.name}:`, {

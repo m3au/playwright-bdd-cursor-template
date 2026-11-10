@@ -20,6 +20,6 @@ describe('target gate policies', () => {
   });
 
   test('refuses empty gate policies', () => {
-    expect(() => gatePolicyForTarget('hypothetical-empty')).toThrow(/No gate policy/);
+    expect(() => gatePolicyForTarget('gate-policy-empty-fixture')).toThrow(/would gate nothing/);
   });
 });

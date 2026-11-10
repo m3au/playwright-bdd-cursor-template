@@ -1,64 +1,56 @@
 # Changelog
 
-## [✨ Feature detected: 1.15.5 -> 1.16.0
+## [🐛 Fix detected: 1.16.7 -> 1.16.8
 
-1.16.0] - 2025-11-20
+1.16.8] - 2026-11-10
+
+### Fixed
+
+- **test**: validate identity on scored and scanned documents
+
+## [1.16.0] - 2025-11-20
 
 ### Added
 
 - integrate performance tests into CI workflow and update documentation
 
-## [🐛 Fix detected: 1.16.0 -> 1.16.1
-
-1.16.1] - 2025-11-20
+## [1.16.1] - 2025-11-20
 
 ### Fixed
 
 - resolve TypeScript type narrowing issues in cart-page.ts
 
-## [🐛 Fix detected: 1.16.1 -> 1.16.2
-
-1.16.2] - 2025-11-20
+## [1.16.2] - 2025-11-20
 
 ### Fixed
 
 - properly narrow TypeScript types in cart-page.ts
 
-## [🐛 Fix detected: 1.16.2 -> 1.16.3
-
-1.16.3] - 2025-11-20
+## [1.16.3] - 2025-11-20
 
 ### Fixed
 
 - **e2e**: fix automationexercise tests and reqres API key requirement
 
-## [🐛 Fix detected: 1.16.3 -> 1.16.4
-
-1.16.4] - 2026-11-07
+## [1.16.4] - 2026-11-07
 
 ### Fixed
 
 - **test**: clear preflight lint failures and exact Click link
 
-## [🐛 Fix detected: 1.16.4 -> 1.16.5
-
-1.16.5] - 2026-11-07
+## [1.16.5] - 2026-11-07
 
 ### Fixed
 
 - **test**: use the ReqRes free-tier key when none is configured
 
-## [🐛 Fix detected: 1.16.5 -> 1.16.6
-
-1.16.6] - 2026-11-07
+## [1.16.6] - 2026-11-07
 
 ### Fixed
 
 - **test**: audit the real documents and count ReqRes Artillery work
 
-## [🐛 Fix detected: 1.16.6 -> 1.16.7
-
-1.16.7] - 2026-11-10
+## [1.16.7] - 2026-11-10
 
 ### Fixed
 

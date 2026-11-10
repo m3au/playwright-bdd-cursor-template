@@ -1,4 +1,6 @@
 import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { defineConfig, type PlaywrightTestConfig } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -39,6 +41,7 @@ const config: PlaywrightTestConfig = {
   expect: { timeout: +environment('EXPECT_TIMEOUT')! },
   reporter: [['html', { open: 'never', outputFolder: 'test-output/playwright-report' }], ['line']],
   outputDir: 'test-output/test-results',
+  globalSetup: path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'tests/audit/global-setup.ts'),
   projects: [
     // Create challenge projects for each browser
     ...challenges.flatMap((challenge) => {

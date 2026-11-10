@@ -9,9 +9,8 @@ import { environment, sanitizeTestName } from '@utils';
 import { getSharedStyles, themes } from '../../scripts/template-utils';
 
 import {
-  assertLiveTargetDocument,
   assertProbedLiveTargetDocument,
-  verifyEssentialAssets,
+  verifyEssentialAssetsWithRequest,
   writeMeasurementModeMarker,
 } from './measurement';
 import { profileForTargetName } from './target-profiles';
@@ -126,21 +125,23 @@ async function openLiveAuditDocument(page: Page, url: string, targetName: string
     );
   }
 
+  const title = await page.title();
+  const html = await page.content();
+
+  assertProbedLiveTargetDocument(profile, {
+    finalUrl,
+    status,
+    title,
+    html,
+  });
+
   if (profile.renderedReadySelector) {
     await expect(page.locator(profile.renderedReadySelector).first()).toBeVisible({
       timeout: 60_000,
     });
-    assertProbedLiveTargetDocument(profile, {
-      finalUrl,
-      status,
-      title: await page.title(),
-      html: await page.content(),
-    });
-    await verifyEssentialAssets(finalUrl, profile);
-    return;
   }
 
-  await assertLiveTargetDocument(url, profile, finalUrl);
+  await verifyEssentialAssetsWithRequest(page.request, finalUrl, profile);
 }
 
 for (const target of axeTargets) {

@@ -2,53 +2,23 @@ import * as fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 
-import type { Browser } from '@playwright/test';
-import { chromium, expect } from '@playwright/test';
+import { chromium } from '@playwright/test';
 import lighthouse from 'lighthouse';
 
-import {
-  assertLiveTargetDocument,
-  assertProbedLiveTargetDocument,
-  prefetchAuditDocument,
-  verifyEssentialAssets,
-  writeMeasurementModeMarker,
-} from './measurement';
+import { assertLighthouseScoredIdentity, prefetchAuditDocument, writeMeasurementModeMarker } from './measurement';
 import type { AuditTargetProfile } from './target-profiles';
 
 type LighthouseRun = Awaited<ReturnType<typeof lighthouse>>;
 
-export async function verifyLiveTargetIdentity(
-  browser: Browser,
-  seedUrl: string,
+export function verifyLighthouseScoredDocument(
+  result: LighthouseRun,
   profile: AuditTargetProfile,
-  finalUrl: string,
-): Promise<void> {
-  if (profile.identityProbe === 'live-rendered') {
-    const validationPage = await browser.newPage();
-    try {
-      const response = await validationPage.goto(seedUrl, {
-        waitUntil: 'load',
-        timeout: 60_000,
-      });
-      if (profile.renderedReadySelector) {
-        await expect(validationPage.locator(profile.renderedReadySelector).first()).toBeVisible({
-          timeout: 60_000,
-        });
-      }
-      assertProbedLiveTargetDocument(profile, {
-        finalUrl: validationPage.url(),
-        status: response?.status() ?? 0,
-        title: await validationPage.title(),
-        html: await validationPage.content(),
-      });
-      await verifyEssentialAssets(validationPage.url(), profile);
-    } finally {
-      await validationPage.close();
-    }
-    return;
+  seedUrl: string,
+): void {
+  if (!result) {
+    throw new Error(`Lighthouse returned no result for ${seedUrl}`);
   }
-
-  await assertLiveTargetDocument(seedUrl, profile, finalUrl);
+  assertLighthouseScoredIdentity(result, profile, seedUrl);
 }
 
 export async function measureDegradedDomDocument(

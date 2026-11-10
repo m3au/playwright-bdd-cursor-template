@@ -137,8 +137,15 @@ export function validateTargetDocument(
       );
     }
   }
+  const extractedBody = html.match(/<body[\s\S]*?<\/body>/i)?.[0] ?? html;
+  const bodySource =
+    profile.bodyMarkerScope === 'document' || profile.identityProbe === 'live-rendered'
+      ? html
+      : extractedBody;
   const bodyText =
-    profile.identityProbe === 'live-rendered' ? html.toLowerCase() : stripHtmlTags(html).toLowerCase();
+    profile.identityProbe === 'live-rendered' || profile.bodyMarkerScope === 'document'
+      ? bodySource.toLowerCase()
+      : stripHtmlTags(bodySource).toLowerCase();
   for (const fragment of profile.requiredBodyFragments) {
     if (!bodyText.includes(fragment.toLowerCase())) {
       throw new Error(`Body for ${profile.id} is missing required marker "${fragment}".`);
@@ -167,17 +174,10 @@ export function assertFinalUrlMatchesSeed(finalUrl: string, profile: AuditTarget
   }
 }
 
-const auditFetchHeaders = {
-  'user-agent':
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  accept: 'text/html,application/xhtml+xml',
-};
-
 export async function prefetchAuditDocument(
   url: string,
 ): Promise<{ status: number; html: string; finalUrl: string }> {
   const response = await fetch(url, {
-    headers: auditFetchHeaders,
     redirect: 'follow',
   });
   return {
@@ -187,50 +187,20 @@ export async function prefetchAuditDocument(
   };
 }
 
-export async function probeLiveDocument(url: string): Promise<LiveDocumentProbe> {
-  const prefetched = await prefetchAuditDocument(url);
-  const title = prefetched.html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() ?? '';
-  return {
-    finalUrl: prefetched.finalUrl,
-    status: prefetched.status,
-    title,
-    html: prefetched.html,
-  };
-}
-
-export async function verifyEssentialAssets(
+export async function verifyEssentialAssetsWithRequest(
+  request: { get: (url: string) => Promise<{ status: () => number }> },
   pageUrl: string,
   profile: AuditTargetProfile,
 ): Promise<void> {
   for (const assetPath of profile.essentialAssets) {
     const assetUrl = new URL(assetPath, pageUrl).href;
-    const response = await fetch(assetUrl, {
-      headers: auditFetchHeaders,
-      redirect: 'follow',
-    });
-    if (response.status !== 200) {
+    const response = await request.get(assetUrl);
+    if (response.status() !== 200) {
       throw new Error(
-        `Essential asset ${assetUrl} for ${profile.id} returned HTTP ${response.status}.`,
+        `Essential asset ${assetUrl} for ${profile.id} returned HTTP ${String(response.status())}.`,
       );
     }
   }
-}
-
-export async function assertLiveTargetDocument(
-  seedUrl: string,
-  profile: AuditTargetProfile,
-  finalUrl = seedUrl,
-): Promise<LiveDocumentProbe> {
-  assertFinalUrlMatchesSeed(finalUrl, profile);
-  const probe = await probeLiveDocument(finalUrl);
-  if (probe.status < 200 || probe.status >= 400) {
-    throw new Error(
-      `Live document probe for ${profile.id} returned HTTP ${probe.status} (final ${probe.finalUrl}).`,
-    );
-  }
-  validateTargetDocument(probe.html, probe.title, profile);
-  await verifyEssentialAssets(probe.finalUrl, profile);
-  return probe;
 }
 
 export function assertProbedLiveTargetDocument(
@@ -256,15 +226,63 @@ export interface LighthouseStatusAudit {
 }
 
 export interface LighthouseResultLike {
+  readonly artifacts?: {
+    readonly MainDocumentContent?: string;
+  };
   readonly lhr?: {
     readonly finalUrl?: string;
     readonly requestedUrl?: string;
     readonly categories?: LighthouseCategories & Record<string, { score?: number | null } | undefined>;
     readonly audits?: {
       readonly 'http-status-code'?: LighthouseStatusAudit;
+      readonly 'document-title'?: { readonly displayValue?: string };
+      readonly 'main-document-content'?: { readonly details?: unknown };
     };
     readonly runtimeError?: { code?: string; message?: string };
   } | null;
+}
+
+export function lighthouseDocumentProbe(
+  result: LighthouseResultLike,
+  seedUrl: string,
+): LiveDocumentProbe {
+  const lhr = result.lhr;
+  if (!lhr) {
+    throw new Error('Lighthouse result is missing lhr');
+  }
+  const finalUrl = lhr.finalUrl ?? lhr.requestedUrl ?? seedUrl;
+  const mainHtml = result.artifacts?.MainDocumentContent ?? '';
+  const title =
+    mainHtml.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() ??
+    String(lhr.audits?.['document-title']?.displayValue ?? '');
+  const audits = lhr.audits ?? {};
+  const fallbackChunks = [
+    title,
+    JSON.stringify(audits['main-document-content']?.details ?? {}),
+    JSON.stringify(audits['link-text']?.details ?? {}),
+    String(audits['meta-description']?.displayValue ?? ''),
+    String(audits['dom-size']?.displayValue ?? ''),
+  ];
+  const html = mainHtml.length > 0 ? mainHtml : fallbackChunks.filter((chunk) => chunk.length > 0).join('\n');
+  const statusCode = Number.parseInt(
+    String(lhr.audits?.['http-status-code']?.displayValue ?? '200'),
+    10,
+  );
+  return {
+    finalUrl,
+    status: Number.isFinite(statusCode) ? statusCode : 200,
+    title,
+    html,
+  };
+}
+
+export function assertLighthouseScoredIdentity(
+  result: LighthouseResultLike,
+  profile: AuditTargetProfile,
+  seedUrl: string,
+): void {
+  const probe = lighthouseDocumentProbe(result, seedUrl);
+  assertProbedLiveTargetDocument(profile, probe);
 }
 
 export function lighthouseLiveMeasurementBlocked(

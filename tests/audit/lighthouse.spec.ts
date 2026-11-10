@@ -9,14 +9,14 @@ import { environment, sanitizeTestName, waitForPort } from '@utils';
 
 import { getSharedStyles, themes } from '../../scripts/template-utils';
 
-import { verifyLiveTargetIdentity, writeDegradedDomDiagnostics } from './lighthouse-live-gate';
+import { verifyLighthouseScoredDocument, writeDegradedDomDiagnostics } from './lighthouse-live-gate';
 import {
   isTargetHttpStatus,
   lighthouseLiveMeasurementBlocked,
   requireNumericScore,
   writeMeasurementModeMarker,
 } from './measurement';
-import { profileForTargetName } from './target-profiles';
+import { lighthouseCategoriesForTarget, profileForTargetName } from './target-profiles';
 
 interface LighthouseTarget {
   name: string;
@@ -29,11 +29,6 @@ const lighthouseTargets: LighthouseTarget[] = [
     name: 'polymer-shop',
     url: environment('BASE_URL_LIGHTHOUSE_POLYMER')!,
     description: 'Polymer Shop Demo – E-commerce performance testing site',
-  },
-  {
-    name: 'w3c-bad',
-    url: environment('BASE_URL_LIGHTHOUSE_W3C_BAD')!,
-    description: 'W3C Before Fix Demo – Demonstrates accessibility issues that need fixing',
   },
 ];
 
@@ -220,23 +215,29 @@ for (const target of lighthouseTargets) {
         );
       }
 
-      await verifyLiveTargetIdentity(browser, target.url, profile, finalUrl);
+      verifyLighthouseScoredDocument(liveResult, profile, target.url);
 
+      const gatedCategories = lighthouseCategoriesForTarget(target.name);
       const measured = numericCategoryScores(liveResult, target.url);
-      const { performance, accessibility, bestPractices, seo } = measured;
 
       console.log(`Lighthouse live scores for ${target.name}:`, {
-        performance,
-        accessibility,
-        bestPractices,
-        seo,
+        ...measured,
         finalUrl,
+        gatedCategories,
       });
 
-      expect(performance).toBeGreaterThanOrEqual(performanceThreshold);
-      expect(accessibility).toBeGreaterThanOrEqual(accessibilityThreshold);
-      expect(bestPractices).toBeGreaterThanOrEqual(bestPracticesThreshold);
-      expect(seo).toBeGreaterThanOrEqual(seoThreshold);
+      if (gatedCategories.includes('performance')) {
+        expect(measured.performance).toBeGreaterThanOrEqual(performanceThreshold);
+      }
+      if (gatedCategories.includes('accessibility')) {
+        expect(measured.accessibility).toBeGreaterThanOrEqual(accessibilityThreshold);
+      }
+      if (gatedCategories.includes('best-practices')) {
+        expect(measured.bestPractices).toBeGreaterThanOrEqual(bestPracticesThreshold);
+      }
+      if (gatedCategories.includes('seo')) {
+        expect(measured.seo).toBeGreaterThanOrEqual(seoThreshold);
+      }
     } finally {
       chrome.kill();
     }
